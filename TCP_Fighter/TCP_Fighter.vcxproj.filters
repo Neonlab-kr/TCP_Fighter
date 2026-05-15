@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Game">
+      <UniqueIdentifier>{ec064830-633b-4b77-b03c-638a4c5b81fd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{187a4d54-ab30-4f2b-ae3d-aa327339e87b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{e4470f32-0097-437d-bfc5-66d7159cf445}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Main">
+      <UniqueIdentifier>{3590f1cf-d967-4ad0-a145-eb37697554bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Server">
+      <UniqueIdentifier>{412d50df-28b6-4571-838c-a0b19280859b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Session">
+      <UniqueIdentifier>{98176bb5-ad2d-44ea-9dae-c650e2fe7a58}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Packet">
+      <UniqueIdentifier>{d7eabc76-a267-4cf3-a0a5-c08a6870716b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Network">
+      <UniqueIdentifier>{5f247041-2278-490f-b5c2-a43a0d433473}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Container">
+      <UniqueIdentifier>{c40ef9bc-5f68-43ca-acbe-1ec71ca18448}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\System">
+      <UniqueIdentifier>{823dc7ce-1aa2-4026-9ac0-6bedb9a888f7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\File">
+      <UniqueIdentifier>{7bfb32fa-c910-46fc-a5b6-cf5f583fb013}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Core\Log">
+      <UniqueIdentifier>{d86004a5-088d-4a3a-9bb5-0d59e4eb95ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Define">
+      <UniqueIdentifier>{3539cb6d-6cde-467b-bf7b-5e8e7acc08e8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Data">
+      <UniqueIdentifier>{7e618e13-a91b-4279-9d28-b3899b13df57}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Game\GameMain.cpp">
+      <Filter>Game\Main</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameServer.cpp">
+      <Filter>Game\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\AsyncSelectServer.cpp">
+      <Filter>Core\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Session.cpp">
+      <Filter>Core\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\RingBuffer.cpp">
+      <Filter>Core\Container</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Config.cpp">
+      <Filter>Core\System</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\FileReader.cpp">
+      <Filter>Core\File</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Logger.cpp">
+      <Filter>Core\Log</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameData.cpp">
+      <Filter>Game\Data</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Game\GameServer.h">
+      <Filter>Game\Server</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\GameSession.h">
+      <Filter>Game\Session</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\PacketDefine.h">
+      <Filter>Game\Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\AsyncSelectServer.h">
+      <Filter>Core\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Session.h">
+      <Filter>Core\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\SocketUtil.h">
+      <Filter>Core\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\RingBuffer.h">
+      <Filter>Core\Container</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Config.h">
+      <Filter>Core\System</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\FileReader.h">
+      <Filter>Core\File</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\Logger.h">
+      <Filter>Core\Log</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\GameDefine.h">
+      <Filter>Game\Define</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\GameData.h">
+      <Filter>Game\Data</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resource\Config.ini">
+      <Filter>Resource</Filter>
+    </None>
+    <None Include="Resource\GameData.ini">
+      <Filter>Resource</Filter>
+    </None>
+  </ItemGroup>
+</Project>
