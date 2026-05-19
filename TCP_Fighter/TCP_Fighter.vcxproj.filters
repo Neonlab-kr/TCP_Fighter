@@ -63,9 +63,6 @@
     <ClCompile Include="Core\Config.cpp">
       <Filter>Core\System</Filter>
     </ClCompile>
-    <ClCompile Include="Core\FileReader.cpp">
-      <Filter>Core\File</Filter>
-    </ClCompile>
     <ClCompile Include="Core\Logger.cpp">
       <Filter>Core\Log</Filter>
     </ClCompile>
@@ -74,15 +71,6 @@
     </ClCompile>
     <ClCompile Include="Core\SelectServer.cpp">
       <Filter>Core\Network</Filter>
-    </ClCompile>
-    <ClCompile Include="Game\PacketMaker.cpp">
-      <Filter>Game\Packet</Filter>
-    </ClCompile>
-    <ClCompile Include="Game\GameAttackLogic.cpp">
-      <Filter>Game\Logic</Filter>
-    </ClCompile>
-    <ClCompile Include="Game\GameMoveLogic.cpp">
-      <Filter>Game\Logic</Filter>
     </ClCompile>
     <ClCompile Include="Game\GameServer_Command.cpp">
       <Filter>Game\Server</Filter>
@@ -98,6 +86,12 @@
     </ClCompile>
     <ClCompile Include="Game\GameServer_Send.cpp">
       <Filter>Game\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\SerializationBuffer.cpp">
+      <Filter>Core\Container</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\IniReader.cpp">
+      <Filter>Core\File</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -122,9 +116,6 @@
     <ClInclude Include="Core\Config.h">
       <Filter>Core\System</Filter>
     </ClInclude>
-    <ClInclude Include="Core\FileReader.h">
-      <Filter>Core\File</Filter>
-    </ClInclude>
     <ClInclude Include="Core\Logger.h">
       <Filter>Core\Log</Filter>
     </ClInclude>
@@ -145,6 +136,12 @@
     </ClInclude>
     <ClInclude Include="Game\GameMoveLogic.h">
       <Filter>Game\Logic</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\SerializationBuffer.h">
+      <Filter>Core\Container</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\IniReader.h">
+      <Filter>Core\File</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

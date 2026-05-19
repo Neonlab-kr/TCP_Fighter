@@ -218,7 +218,6 @@ void CSelectServer::Disconnect(CSession* session)
         return;
 
     session->DisconnectPending = true;
-    OnRelease(session);
 }
 
 void CSelectServer::BuildFdSets(fd_set& readSet, fd_set& writeSet, bool& hasWriteSocket)
@@ -268,6 +267,7 @@ void CSelectServer::AcceptProc()
 
         if (m_ActiveSessionCount >= m_MaxSession)
         {
+            CLogger::Error("Accept rejected. session full. active=%d, max=%d", m_ActiveSessionCount, m_MaxSession);
             closesocket(clientSocket);
             continue;
         }
@@ -276,6 +276,7 @@ void CSelectServer::AcceptProc()
 
         if (session == nullptr)
         {
+            CLogger::Error("Accept rejected. empty session slot not found. active=%d, max=%d", m_ActiveSessionCount, m_MaxSession);
             closesocket(clientSocket);
             continue;
         }
@@ -403,6 +404,7 @@ void CSelectServer::RemovePendingSessions()
         if (!session.IsActive() || !session.DisconnectPending)
             continue;
 
+        OnRelease(&session);
         session.Close();
 
         if (m_ActiveSessionCount > 0)

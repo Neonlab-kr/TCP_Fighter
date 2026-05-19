@@ -7,6 +7,7 @@
 #include "GameSession.h"
 #include "GameData.h"
 #include "PacketDefine.h"
+#include "../Core/SerializationBuffer.h"
 
 class CGameServer : public CSelectServer
 {
@@ -27,14 +28,14 @@ protected:
 private:
     void FixedUpdateGame();
     void Render();
-    void ProcessPacket(CSession* session, const char* packet, int packetSize);
+    void ProcessPacket(CSession* session, CPacket& packet);
 
-    bool PacketProc_MoveStart(CSession* session, const char* packet, int packetSize);
-    bool PacketProc_MoveStop(CSession* session, const char* packet, int packetSize);
-    bool PacketProc_Attack1(CSession* session, const char* packet, int packetSize);
-    bool PacketProc_Attack2(CSession* session, const char* packet, int packetSize);
-    bool PacketProc_Attack3(CSession* session, const char* packet, int packetSize);
-    bool PacketProc_Sync(CSession* session, const char* packet, int packetSize);
+    bool PacketProc_MoveStart(CSession* session, CPacket& packet);
+    bool PacketProc_MoveStop(CSession* session, CPacket& packet);
+    bool PacketProc_Attack1(CSession* session, CPacket& packet);
+    bool PacketProc_Attack2(CSession* session, CPacket& packet);
+    bool PacketProc_Attack3(CSession* session, CPacket& packet);
+    bool PacketProc_Sync(CSession* session, CPacket& packet);
 
     inline GameSession* FindGameSession(CSession* session)
     {
@@ -87,13 +88,9 @@ private:
         return gameSession.AttackLockUntilTimeMs != 0 && IsTimeBefore(nowMs, gameSession.AttackLockUntilTimeMs);
     }
 
-    inline bool ValidatePacketSize(const char* packet, int packetSize, int expectedSize) const
+    inline bool ValidatePayloadSize(const CPacket& packet, int expectedPayloadSize) const
     {
-        if (packet == nullptr || packetSize != expectedSize)
-            return false;
-
-        const st_PACKET_HEADER* header = reinterpret_cast<const st_PACKET_HEADER*>(packet);
-        return static_cast<int>(sizeof(st_PACKET_HEADER)) + header->bySize == expectedSize;
+        return packet.GetReadSize() == expectedPayloadSize;
     }
 
     inline bool ValidateDirection(std::uint8_t direction) const
@@ -155,6 +152,7 @@ private:
     GameData m_GameData;
     std::unique_ptr<GameSession[]> m_GameSessions;
     std::unique_ptr<CSession*[]> m_DeadSessionBuffer;
+    CPacket m_PacketBuffer;
     std::uint32_t m_CurrentTimeMs;
     std::uint32_t m_LastLoopTimeMs;
     std::uint32_t m_FixedUpdateAccumulatorMs;

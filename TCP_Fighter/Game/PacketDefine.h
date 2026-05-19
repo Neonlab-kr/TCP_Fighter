@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <type_traits>
 
 constexpr std::uint8_t dfPACKET_CODE = 0x89;
 constexpr int dfPACKET_HEADER_SIZE = 3;
@@ -37,179 +36,23 @@ constexpr int dfPACKET_MAX_SIZE = 255 + dfPACKET_HEADER_SIZE;
 #define dfPACKET_MOVE_DIR_DD                6
 #define dfPACKET_MOVE_DIR_LD                7
 
-#pragma pack(push, 1)
+constexpr int dfPACKET_SIZE_SC_CREATE_MY_CHARACTER = sizeof(int) + sizeof(std::uint8_t) + sizeof(short) + sizeof(short) + sizeof(std::uint8_t);
+constexpr int dfPACKET_SIZE_SC_CREATE_OTHER_CHARACTER = sizeof(int) + sizeof(std::uint8_t) + sizeof(short) + sizeof(short) + sizeof(std::uint8_t);
+constexpr int dfPACKET_SIZE_SC_DELETE_CHARACTER = sizeof(int);
 
-struct st_PACKET_HEADER
-{
-    std::uint8_t byCode;
-    std::uint8_t bySize;
-    std::uint8_t byType;
-};
+constexpr int dfPACKET_SIZE_CS_MOVE_START = sizeof(std::uint8_t) + sizeof(short) + sizeof(short);
+constexpr int dfPACKET_SIZE_SC_MOVE_START = sizeof(int) + sizeof(std::uint8_t) + sizeof(short) + sizeof(short);
+constexpr int dfPACKET_SIZE_CS_MOVE_STOP = sizeof(std::uint8_t) + sizeof(short) + sizeof(short);
+constexpr int dfPACKET_SIZE_SC_MOVE_STOP = sizeof(int) + sizeof(std::uint8_t) + sizeof(short) + sizeof(short);
 
-struct st_PACKET_SC_CREATE_MY_CHARACTER
-{
-    st_PACKET_HEADER header;
-    int id;
-    std::uint8_t direction;
-    short x;
-    short y;
-    std::uint8_t hp;
-};
+constexpr int dfPACKET_SIZE_CS_ATTACK1 = sizeof(std::uint8_t) + sizeof(short) + sizeof(short);
+constexpr int dfPACKET_SIZE_SC_ATTACK1 = sizeof(int) + sizeof(std::uint8_t) + sizeof(short) + sizeof(short);
+constexpr int dfPACKET_SIZE_CS_ATTACK2 = sizeof(std::uint8_t) + sizeof(short) + sizeof(short);
+constexpr int dfPACKET_SIZE_SC_ATTACK2 = sizeof(int) + sizeof(std::uint8_t) + sizeof(short) + sizeof(short);
+constexpr int dfPACKET_SIZE_CS_ATTACK3 = sizeof(std::uint8_t) + sizeof(short) + sizeof(short);
+constexpr int dfPACKET_SIZE_SC_ATTACK3 = sizeof(int) + sizeof(std::uint8_t) + sizeof(short) + sizeof(short);
 
-struct st_PACKET_SC_CREATE_OTHER_CHARACTER
-{
-    st_PACKET_HEADER header;
-    int id;
-    std::uint8_t direction;
-    short x;
-    short y;
-    std::uint8_t hp;
-};
+constexpr int dfPACKET_SIZE_SC_DAMAGE = sizeof(int) + sizeof(int) + sizeof(std::uint8_t);
+constexpr int dfPACKET_SIZE_CS_SYNC = sizeof(short) + sizeof(short);
+constexpr int dfPACKET_SIZE_SC_SYNC = sizeof(int) + sizeof(short) + sizeof(short);
 
-struct st_PACKET_SC_DELETE_CHARACTER
-{
-    st_PACKET_HEADER header;
-    int id;
-};
-
-struct st_PACKET_CS_MOVE_START
-{
-    st_PACKET_HEADER header;
-    std::uint8_t direction;
-    short x;
-    short y;
-};
-
-struct st_PACKET_SC_MOVE_START
-{
-    st_PACKET_HEADER header;
-    int id;
-    std::uint8_t direction;
-    short x;
-    short y;
-};
-
-struct st_PACKET_CS_MOVE_STOP
-{
-    st_PACKET_HEADER header;
-    std::uint8_t direction;
-    short x;
-    short y;
-};
-
-struct st_PACKET_SC_MOVE_STOP
-{
-    st_PACKET_HEADER header;
-    int id;
-    std::uint8_t direction;
-    short x;
-    short y;
-};
-
-struct st_PACKET_CS_ATTACK1
-{
-    st_PACKET_HEADER header;
-    std::uint8_t direction;
-    short x;
-    short y;
-};
-
-struct st_PACKET_SC_ATTACK1
-{
-    st_PACKET_HEADER header;
-    int id;
-    std::uint8_t direction;
-    short x;
-    short y;
-};
-
-struct st_PACKET_CS_ATTACK2
-{
-    st_PACKET_HEADER header;
-    std::uint8_t direction;
-    short x;
-    short y;
-};
-
-struct st_PACKET_SC_ATTACK2
-{
-    st_PACKET_HEADER header;
-    int id;
-    std::uint8_t direction;
-    short x;
-    short y;
-};
-
-struct st_PACKET_CS_ATTACK3
-{
-    st_PACKET_HEADER header;
-    std::uint8_t direction;
-    short x;
-    short y;
-};
-
-struct st_PACKET_SC_ATTACK3
-{
-    st_PACKET_HEADER header;
-    int id;
-    std::uint8_t direction;
-    short x;
-    short y;
-};
-
-struct st_PACKET_SC_DAMAGE
-{
-    st_PACKET_HEADER header;
-    int attackId;
-    int damageId;
-    std::uint8_t damageHp;
-};
-
-struct st_PACKET_CS_SYNC
-{
-    st_PACKET_HEADER header;
-    short x;
-    short y;
-};
-
-struct st_PACKET_SC_SYNC
-{
-    st_PACKET_HEADER header;
-    int id;
-    short x;
-    short y;
-};
-
-#pragma pack(pop)
-
-static_assert(sizeof(st_PACKET_HEADER) == dfPACKET_HEADER_SIZE, "packet header size must be 3");
-static_assert(sizeof(st_PACKET_SC_CREATE_MY_CHARACTER) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_SC_CREATE_OTHER_CHARACTER) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_SC_DELETE_CHARACTER) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_CS_MOVE_START) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_SC_MOVE_START) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_CS_MOVE_STOP) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_SC_MOVE_STOP) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_CS_ATTACK1) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_SC_ATTACK1) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_CS_ATTACK2) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_SC_ATTACK2) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_CS_ATTACK3) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_SC_ATTACK3) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_SC_DAMAGE) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_CS_SYNC) <= dfPACKET_MAX_SIZE, "packet size overflow");
-static_assert(sizeof(st_PACKET_SC_SYNC) <= dfPACKET_MAX_SIZE, "packet size overflow");
-
-template <typename TPacket>
-inline st_PACKET_HEADER MakePacketHeader(std::uint8_t type)
-{
-    static_assert(std::is_trivially_copyable<TPacket>::value, "packet must be trivially copyable");
-    static_assert(sizeof(TPacket) >= sizeof(st_PACKET_HEADER), "packet must include header");
-    static_assert(sizeof(TPacket) <= dfPACKET_MAX_SIZE, "packet size overflow");
-
-    st_PACKET_HEADER header{};
-    header.byCode = dfPACKET_CODE;
-    header.bySize = static_cast<std::uint8_t>(sizeof(TPacket) - sizeof(st_PACKET_HEADER));
-    header.byType = type;
-    return header;
-}

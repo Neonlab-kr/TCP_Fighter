@@ -10,6 +10,7 @@
 
 #include "Config.h"
 #include "Session.h"
+#include "SerializationBuffer.h"
 
 class CSelectServer
 {
@@ -35,16 +36,14 @@ protected:
     bool SendUnicast(CSession* session, const char* buffer, int size);
     void SendBroadcast(CSession* exceptSession, const char* buffer, int size);
 
-    template <typename TPacket>
-    inline bool SendUnicast(CSession* session, const TPacket& packet)
+    inline bool SendUnicast(CSession* session, const CPacket& packet)
     {
-        return SendUnicast(session, reinterpret_cast<const char*>(&packet), static_cast<int>(sizeof(TPacket)));
+        return SendUnicast(session, packet.GetBufferPtr(), packet.GetDataSize());
     }
 
-    template <typename TPacket>
-    inline void SendBroadcast(CSession* exceptSession, const TPacket& packet)
+    inline void SendBroadcast(CSession* exceptSession, const CPacket& packet)
     {
-        SendBroadcast(exceptSession, reinterpret_cast<const char*>(&packet), static_cast<int>(sizeof(TPacket)));
+        SendBroadcast(exceptSession, packet.GetBufferPtr(), packet.GetDataSize());
     }
 
 private:

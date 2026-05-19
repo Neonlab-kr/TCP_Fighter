@@ -72,7 +72,9 @@ void CGameServer::Run()
             m_FixedUpdateAccumulatorMs -= m_ClientFrameMs;
         }
 
-        Render();
+        if (m_Config.EnableRender)
+            Render();
+
         Sleep(0);
     }
 }
@@ -110,11 +112,11 @@ void CGameServer::OnAccept(CSession* session)
 
     CLogger::Info("Client accepted. session=%llu, player=%d, total=%d", session->GetSessionId(), joined.PlayerId, GetSessionCount());
 
-    st_PACKET_SC_CREATE_MY_CHARACTER myPacket{};
+    CPacket myPacket(dfPACKET_MAX_SIZE);
     MakePacket_CreateMyCharacter(myPacket, joined.PlayerId, joined.Direction, joined.X, joined.Y, joined.HP);
     SendUnicast(session, myPacket);
 
-    st_PACKET_SC_CREATE_OTHER_CHARACTER newOtherPacket{};
+    CPacket newOtherPacket(dfPACKET_MAX_SIZE);
     MakePacket_CreateOtherCharacter(newOtherPacket, joined.PlayerId, joined.Direction, joined.X, joined.Y, joined.HP);
     SendBroadcast(session, newOtherPacket);
 
@@ -125,7 +127,7 @@ void CGameServer::OnAccept(CSession* session)
         if (!other.Active || other.NetSession == session)
             continue;
 
-        st_PACKET_SC_CREATE_OTHER_CHARACTER oldOtherPacket{};
+        CPacket oldOtherPacket(dfPACKET_MAX_SIZE);
         MakePacket_CreateOtherCharacter(oldOtherPacket, other.PlayerId, other.Direction, other.X, other.Y, other.HP);
         SendUnicast(session, oldOtherPacket);
     }
@@ -142,7 +144,7 @@ void CGameServer::OnRelease(CSession* session)
 
     CLogger::Info("Client released. session=%llu, player=%d", session->GetSessionId(), playerId);
 
-    st_PACKET_SC_DELETE_CHARACTER deletePacket{};
+    CPacket deletePacket(dfPACKET_MAX_SIZE);
     MakePacket_DeleteCharacter(deletePacket, playerId);
     SendBroadcast(session, deletePacket);
 
