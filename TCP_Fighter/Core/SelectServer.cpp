@@ -1,6 +1,6 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
-#include "AsyncSelectServer.h"
+#include "SelectServer.h"
 #include "SocketUtil.h"
 #include "Logger.h"
 
@@ -8,30 +8,34 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
-static const UINT WM_ASYNC_NETWORK = WM_USER + 100;
-static const wchar_t* ASYNC_SELECT_WINDOW_CLASS = L"ProcademyAsyncSelectServerWindow";
-
-CAsyncSelectServer::CAsyncSelectServer()
+CSelectServer::CSelectServer()
 {
     m_ListenSocket = INVALID_SOCKET;
-    m_hWnd = nullptr;
     m_NextSessionId = 1;
     m_Initialized = false;
     m_MaxSession = 0;
     m_ActiveSessionCount = 0;
 }
 
-CAsyncSelectServer::~CAsyncSelectServer()
+CSelectServer::~CSelectServer()
 {
     Release();
 }
 
-bool CAsyncSelectServer::Init(const ServerConfig& config)
+bool CSelectServer::Init(const ServerConfig& config)
 {
     m_Config = config;
-    m_MaxSession = m_Config.MaxSession > 0 ? m_Config.MaxSession : 64;
+    m_MaxSession = m_Config.MaxSession;
+
+    if (m_MaxSession <= 0)
+        m_MaxSession = SELECT_MAX_CLIENT_SESSION;
+
+    if (m_MaxSession > SELECT_MAX_CLIENT_SESSION)
+        m_MaxSession = SELECT_MAX_CLIENT_SESSION;
+
     m_ActiveSessionCount = 0;
     m_Sessions.reset(new CSession[m_MaxSession]);
+
     for (int i = 0; i < m_MaxSession; ++i)
         m_Sessions[i].ReserveBuffers(m_Config.RecvBufferSize, m_Config.SendBufferSize);
 
@@ -43,14 +47,6 @@ bool CAsyncSelectServer::Init(const ServerConfig& config)
     }
 
     m_Initialized = true;
-
-    if (!CreateMessageWindow())
-    {
-        CLogger::Error("CreateMessageWindow failed");
-        WSACleanup();
-        m_Initialized = false;
-        return false;
-    }
 
     m_ListenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (m_ListenSocket == INVALID_SOCKET)
@@ -86,33 +82,70 @@ bool CAsyncSelectServer::Init(const ServerConfig& config)
         return false;
     }
 
-    if (WSAAsyncSelect(m_ListenSocket, m_hWnd, WM_ASYNC_NETWORK, FD_ACCEPT | FD_CLOSE) == SOCKET_ERROR)
+    if (!CSocketUtil::SetNonBlocking(m_ListenSocket))
     {
-        CLogger::Error("WSAAsyncSelect listen failed: %d", WSAGetLastError());
+        CLogger::Error("listen nonblocking failed: %d", WSAGetLastError());
         Release();
         return false;
     }
 
-    CLogger::Info("AsyncSelect server started. %s:%hu, ClientFPS=%d, MaxSession=%d", m_Config.BindIP.c_str(), m_Config.Port, m_Config.ClientFPS, m_MaxSession);
+    CLogger::Info("Select server started. %s:%hu, ClientFPS=%d, MaxSession=%d", m_Config.BindIP.c_str(), m_Config.Port, m_Config.ClientFPS, m_MaxSession);
     return true;
 }
 
-void CAsyncSelectServer::UpdateNetwork()
+void CSelectServer::UpdateNetwork()
 {
-    MSG msg{};
+    if (!m_Initialized || m_ListenSocket == INVALID_SOCKET)
+        return;
 
-    while (PeekMessage(&msg, m_hWnd, 0, 0, PM_REMOVE))
+    fd_set readSet;
+    fd_set writeSet;
+    bool hasWriteSocket = false;
+
+    BuildFdSets(readSet, writeSet, hasWriteSocket);
+
+    timeval timeout{};
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
+
+    const int ret = select(0, &readSet, hasWriteSocket ? &writeSet : nullptr, nullptr, &timeout);
+
+    if (ret == SOCKET_ERROR)
     {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        OnError(WSAGetLastError());
+        RemovePendingSessions();
+        return;
+    }
+
+    if (ret > 0)
+    {
+        if (FD_ISSET(m_ListenSocket, &readSet))
+            AcceptProc();
+
+        for (int i = 0; i < m_MaxSession; ++i)
+        {
+            CSession& session = m_Sessions[i];
+
+            if (!session.IsActive() || session.DisconnectPending)
+                continue;
+
+            if (FD_ISSET(session.GetSocket(), &readSet))
+                RecvProc(&session);
+
+            if (!session.IsActive() || session.DisconnectPending)
+                continue;
+
+            if (hasWriteSocket && FD_ISSET(session.GetSocket(), &writeSet))
+                SendProc(&session);
+        }
     }
 
     RemovePendingSessions();
 }
 
-void CAsyncSelectServer::Release()
+void CSelectServer::Release()
 {
-    if (!m_Initialized && m_ListenSocket == INVALID_SOCKET && m_hWnd == nullptr && m_Sessions == nullptr)
+    if (!m_Initialized && m_ListenSocket == INVALID_SOCKET && m_Sessions == nullptr)
         return;
 
     if (m_Sessions != nullptr)
@@ -122,6 +155,7 @@ void CAsyncSelectServer::Release()
             if (m_Sessions[i].IsActive())
                 m_Sessions[i].Close();
         }
+
         m_Sessions.reset();
     }
 
@@ -129,7 +163,6 @@ void CAsyncSelectServer::Release()
     m_ActiveSessionCount = 0;
 
     CSocketUtil::CloseSocket(m_ListenSocket);
-    DestroyMessageWindow();
 
     if (m_Initialized)
     {
@@ -138,7 +171,7 @@ void CAsyncSelectServer::Release()
     }
 }
 
-bool CAsyncSelectServer::SendUnicast(CSession* session, const char* buffer, int size)
+bool CSelectServer::SendUnicast(CSession* session, const char* buffer, int size)
 {
     if (session == nullptr || buffer == nullptr || size <= 0)
         return false;
@@ -154,11 +187,10 @@ bool CAsyncSelectServer::SendUnicast(CSession* session, const char* buffer, int 
         return false;
     }
 
-    SendProc(session);
-    return session->IsActive() && !session->DisconnectPending;
+    return true;
 }
 
-void CAsyncSelectServer::SendBroadcast(CSession* exceptSession, const char* buffer, int size)
+void CSelectServer::SendBroadcast(CSession* exceptSession, const char* buffer, int size)
 {
     if (buffer == nullptr || size <= 0 || m_Sessions == nullptr)
         return;
@@ -177,7 +209,7 @@ void CAsyncSelectServer::SendBroadcast(CSession* exceptSession, const char* buff
     }
 }
 
-void CAsyncSelectServer::Disconnect(CSession* session)
+void CSelectServer::Disconnect(CSession* session)
 {
     if (session == nullptr)
         return;
@@ -189,101 +221,33 @@ void CAsyncSelectServer::Disconnect(CSession* session)
     OnRelease(session);
 }
 
-LRESULT CALLBACK CAsyncSelectServer::WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+void CSelectServer::BuildFdSets(fd_set& readSet, fd_set& writeSet, bool& hasWriteSocket)
 {
-    CAsyncSelectServer* server = reinterpret_cast<CAsyncSelectServer*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    FD_ZERO(&readSet);
+    FD_ZERO(&writeSet);
 
-    if (msg == WM_NCCREATE)
+    hasWriteSocket = false;
+
+    FD_SET(m_ListenSocket, &readSet);
+
+    for (int i = 0; i < m_MaxSession; ++i)
     {
-        CREATESTRUCT* createStruct = reinterpret_cast<CREATESTRUCT*>(lParam);
-        server = reinterpret_cast<CAsyncSelectServer*>(createStruct->lpCreateParams);
-        SetWindowLongPtr(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(server));
-        return TRUE;
-    }
+        CSession& session = m_Sessions[i];
 
-    if (msg == WM_ASYNC_NETWORK && server != nullptr)
-    {
-        server->OnNetworkMessage(wParam, lParam);
-        return 0;
-    }
+        if (!session.IsActive() || session.DisconnectPending)
+            continue;
 
-    return DefWindowProc(hwnd, msg, wParam, lParam);
-}
+        FD_SET(session.GetSocket(), &readSet);
 
-bool CAsyncSelectServer::CreateMessageWindow()
-{
-    HINSTANCE hInstance = GetModuleHandle(nullptr);
-
-    WNDCLASSEXW wc{};
-    wc.cbSize = sizeof(wc);
-    wc.lpfnWndProc = CAsyncSelectServer::WindowProc;
-    wc.hInstance = hInstance;
-    wc.lpszClassName = ASYNC_SELECT_WINDOW_CLASS;
-
-    RegisterClassExW(&wc);
-
-    m_hWnd = CreateWindowExW(0, ASYNC_SELECT_WINDOW_CLASS, L"", 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr, hInstance, this);
-    return m_hWnd != nullptr;
-}
-
-void CAsyncSelectServer::DestroyMessageWindow()
-{
-    if (m_hWnd != nullptr)
-    {
-        DestroyWindow(m_hWnd);
-        m_hWnd = nullptr;
-    }
-}
-
-void CAsyncSelectServer::OnNetworkMessage(WPARAM wParam, LPARAM lParam)
-{
-    SOCKET socket = static_cast<SOCKET>(wParam);
-    const int event = WSAGETSELECTEVENT(lParam);
-    const int error = WSAGETSELECTERROR(lParam);
-
-    if (error != 0)
-    {
-        if (socket == m_ListenSocket)
+        if (session.SendBuffer.GetUseSize() > 0)
         {
-            OnError(error);
-            return;
+            FD_SET(session.GetSocket(), &writeSet);
+            hasWriteSocket = true;
         }
-
-        Disconnect(FindSession(socket));
-        return;
-    }
-
-    if (socket == m_ListenSocket)
-    {
-        if (event == FD_ACCEPT)
-            AcceptProc();
-        return;
-    }
-
-    CSession* session = FindSession(socket);
-    if (session == nullptr)
-        return;
-
-    switch (event)
-    {
-    case FD_READ:
-        RecvProc(session);
-        break;
-
-    case FD_WRITE:
-        SendProc(session);
-        break;
-
-    case FD_CLOSE:
-        Disconnect(session);
-        break;
-
-    default:
-        break;
     }
 }
 
-void CAsyncSelectServer::AcceptProc()
+void CSelectServer::AcceptProc()
 {
     while (true)
     {
@@ -295,8 +259,10 @@ void CAsyncSelectServer::AcceptProc()
         if (clientSocket == INVALID_SOCKET)
         {
             const int err = WSAGetLastError();
+
             if (err != WSAEWOULDBLOCK)
                 CLogger::Error("accept failed: %d", err);
+
             return;
         }
 
@@ -307,19 +273,20 @@ void CAsyncSelectServer::AcceptProc()
         }
 
         CSession* session = FindEmptySessionSlot();
+
         if (session == nullptr)
         {
             closesocket(clientSocket);
             continue;
         }
 
-        CSocketUtil::SetTcpNoDelay(clientSocket, m_Config.TcpNoDelay);
-
-        if (WSAAsyncSelect(clientSocket, m_hWnd, WM_ASYNC_NETWORK, FD_READ | FD_WRITE | FD_CLOSE) == SOCKET_ERROR)
+        if (!CSocketUtil::SetNonBlocking(clientSocket))
         {
             closesocket(clientSocket);
             continue;
         }
+
+        CSocketUtil::SetTcpNoDelay(clientSocket, m_Config.TcpNoDelay);
 
         const int slotIndex = static_cast<int>(session - m_Sessions.get());
         session->Initialize(m_NextSessionId++, slotIndex, clientSocket, clientAddr);
@@ -329,7 +296,7 @@ void CAsyncSelectServer::AcceptProc()
     }
 }
 
-void CAsyncSelectServer::RecvProc(CSession* session)
+void CSelectServer::RecvProc(CSession* session)
 {
     if (session == nullptr || !session->IsActive() || session->DisconnectPending)
         return;
@@ -372,7 +339,7 @@ void CAsyncSelectServer::RecvProc(CSession* session)
     OnRecv(session);
 }
 
-void CAsyncSelectServer::SendProc(CSession* session)
+void CSelectServer::SendProc(CSession* session)
 {
     if (session == nullptr || !session->IsActive() || session->DisconnectPending)
         return;
@@ -380,6 +347,7 @@ void CAsyncSelectServer::SendProc(CSession* session)
     while (session->SendBuffer.GetUseSize() > 0)
     {
         const int directSize = session->SendBuffer.DirectDequeueSize();
+
         if (directSize <= 0)
             return;
 
@@ -409,22 +377,7 @@ void CAsyncSelectServer::SendProc(CSession* session)
     }
 }
 
-CSession* CAsyncSelectServer::FindSession(SOCKET socket)
-{
-    if (m_Sessions == nullptr)
-        return nullptr;
-
-    for (int i = 0; i < m_MaxSession; ++i)
-    {
-        CSession& session = m_Sessions[i];
-        if (session.IsActive() && session.GetSocket() == socket)
-            return &session;
-    }
-
-    return nullptr;
-}
-
-CSession* CAsyncSelectServer::FindEmptySessionSlot()
+CSession* CSelectServer::FindEmptySessionSlot()
 {
     if (m_Sessions == nullptr)
         return nullptr;
@@ -438,7 +391,7 @@ CSession* CAsyncSelectServer::FindEmptySessionSlot()
     return nullptr;
 }
 
-void CAsyncSelectServer::RemovePendingSessions()
+void CSelectServer::RemovePendingSessions()
 {
     if (m_Sessions == nullptr)
         return;
@@ -451,6 +404,8 @@ void CAsyncSelectServer::RemovePendingSessions()
             continue;
 
         session.Close();
-        --m_ActiveSessionCount;
+
+        if (m_ActiveSessionCount > 0)
+            --m_ActiveSessionCount;
     }
 }

@@ -43,6 +43,9 @@
     <Filter Include="Game\Data">
       <UniqueIdentifier>{7e618e13-a91b-4279-9d28-b3899b13df57}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Logic">
+      <UniqueIdentifier>{113ea117-71e5-4747-901f-48fd8cc7fde9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game\GameMain.cpp">
@@ -50,9 +53,6 @@
     </ClCompile>
     <ClCompile Include="Game\GameServer.cpp">
       <Filter>Game\Server</Filter>
-    </ClCompile>
-    <ClCompile Include="Core\AsyncSelectServer.cpp">
-      <Filter>Core\Network</Filter>
     </ClCompile>
     <ClCompile Include="Core\Session.cpp">
       <Filter>Core\Network</Filter>
@@ -72,6 +72,33 @@
     <ClCompile Include="Game\GameData.cpp">
       <Filter>Game\Data</Filter>
     </ClCompile>
+    <ClCompile Include="Core\SelectServer.cpp">
+      <Filter>Core\Network</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\PacketMaker.cpp">
+      <Filter>Game\Packet</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameAttackLogic.cpp">
+      <Filter>Game\Logic</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameMoveLogic.cpp">
+      <Filter>Game\Logic</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameServer_Command.cpp">
+      <Filter>Game\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameServer_Network.cpp">
+      <Filter>Game\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameServer_PacketProc.cpp">
+      <Filter>Game\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameServer_Render.cpp">
+      <Filter>Game\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameServer_Send.cpp">
+      <Filter>Game\Server</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game\GameServer.h">
@@ -82,9 +109,6 @@
     </ClInclude>
     <ClInclude Include="Game\PacketDefine.h">
       <Filter>Game\Packet</Filter>
-    </ClInclude>
-    <ClInclude Include="Core\AsyncSelectServer.h">
-      <Filter>Core\Network</Filter>
     </ClInclude>
     <ClInclude Include="Core\Session.h">
       <Filter>Core\Network</Filter>
@@ -109,6 +133,18 @@
     </ClInclude>
     <ClInclude Include="Game\GameData.h">
       <Filter>Game\Data</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\SelectServer.h">
+      <Filter>Core\Network</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\PacketMaker.h">
+      <Filter>Game\Packet</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\GameAttackLogic.h">
+      <Filter>Game\Logic</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\GameMoveLogic.h">
+      <Filter>Game\Logic</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

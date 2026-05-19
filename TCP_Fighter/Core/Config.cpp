@@ -60,7 +60,10 @@ bool CConfigLoader::LoadServerConfig(const std::string& path, ServerConfig& outC
         outConfig.ClientFPS = 50;
 
     if (outConfig.MaxSession <= 0)
-        outConfig.MaxSession = 64;
+        outConfig.MaxSession = 63;
+
+    if (outConfig.MaxSession > 63)
+        outConfig.MaxSession = 63;
 
     if (outConfig.RecvBufferSize <= 0)
         outConfig.RecvBufferSize = 8192;

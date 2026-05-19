@@ -78,27 +78,6 @@ namespace
         return static_cast<unsigned int>(value);
     }
 
-    unsigned __int64 GetUInt64(const SectionMap& data, const char* section, const char* key, unsigned __int64 defaultValue)
-    {
-        auto sectionIt = data.find(section);
-        if (sectionIt == data.end())
-            return defaultValue;
-
-        auto keyIt = sectionIt->second.find(key);
-        if (keyIt == sectionIt->second.end())
-            return defaultValue;
-
-        try
-        {
-            unsigned long long value = std::stoull(keyIt->second);
-            return static_cast<unsigned __int64>(value);
-        }
-        catch (...)
-        {
-            return defaultValue;
-        }
-    }
-
     bool LoadIni(const char* filePath, SectionMap& outData)
     {
         if (filePath == nullptr)
@@ -149,8 +128,8 @@ namespace
         if (attackData.RangeY < 0)
             attackData.RangeY = 0;
 
-        if (attackData.CastTick == 0)
-            attackData.CastTick = 1;
+        if (attackData.CooldownMs == 0)
+            attackData.CooldownMs = 1;
     }
 
     void NormalizeGameData(GameData& data)
@@ -173,11 +152,11 @@ namespace
         if (data.World.MoveBottom <= data.World.MoveTop)
             data.World.MoveBottom = static_cast<short>(data.World.MoveTop + 1);
 
-        if (data.Move.MoveXPerTick <= 0)
-            data.Move.MoveXPerTick = 1;
+        if (data.Move.MoveXPerFrame <= 0)
+            data.Move.MoveXPerFrame = 1;
 
-        if (data.Move.MoveYPerTick <= 0)
-            data.Move.MoveYPerTick = 1;
+        if (data.Move.MoveYPerFrame <= 0)
+            data.Move.MoveYPerFrame = 1;
 
         if (data.Move.ErrorRange < 0)
             data.Move.ErrorRange = 0;
@@ -215,26 +194,28 @@ bool CGameDataLoader::LoadGameData(const char* filePath, GameData& outData)
     loadedData.World.MoveRight = GetShort(ini, "World", "MoveRight", loadedData.World.MoveRight);
     loadedData.World.MoveBottom = GetShort(ini, "World", "MoveBottom", loadedData.World.MoveBottom);
 
-    loadedData.Move.MoveXPerTick = GetShort(ini, "Move", "MoveXPerTick", loadedData.Move.MoveXPerTick);
-    loadedData.Move.MoveYPerTick = GetShort(ini, "Move", "MoveYPerTick", loadedData.Move.MoveYPerTick);
+    loadedData.Move.MoveXPerFrame = GetShort(ini, "Move", "MoveXPerFrame", loadedData.Move.MoveXPerFrame);
+    loadedData.Move.MoveYPerFrame = GetShort(ini, "Move", "MoveYPerFrame", loadedData.Move.MoveYPerFrame);
     loadedData.Move.ErrorRange = GetShort(ini, "Move", "ErrorRange", loadedData.Move.ErrorRange);
 
     loadedData.Character.DefaultHP = GetByte(ini, "Character", "DefaultHP", loadedData.Character.DefaultHP);
 
+    loadedData.Attack.InputAdvanceMs = GetUInt(ini, "Attack", "InputAdvanceMs", loadedData.Attack.InputAdvanceMs);
+
     loadedData.Attack1.RangeX = GetShort(ini, "Attack1", "RangeX", loadedData.Attack1.RangeX);
     loadedData.Attack1.RangeY = GetShort(ini, "Attack1", "RangeY", loadedData.Attack1.RangeY);
     loadedData.Attack1.Damage = GetByte(ini, "Attack1", "Damage", loadedData.Attack1.Damage);
-    loadedData.Attack1.CastTick = GetUInt(ini, "Attack1", "CastTick", loadedData.Attack1.CastTick);
+    loadedData.Attack1.CooldownMs = GetUInt(ini, "Attack1", "CooldownMs", loadedData.Attack1.CooldownMs);
 
     loadedData.Attack2.RangeX = GetShort(ini, "Attack2", "RangeX", loadedData.Attack2.RangeX);
     loadedData.Attack2.RangeY = GetShort(ini, "Attack2", "RangeY", loadedData.Attack2.RangeY);
     loadedData.Attack2.Damage = GetByte(ini, "Attack2", "Damage", loadedData.Attack2.Damage);
-    loadedData.Attack2.CastTick = GetUInt(ini, "Attack2", "CastTick", loadedData.Attack2.CastTick);
+    loadedData.Attack2.CooldownMs = GetUInt(ini, "Attack2", "CooldownMs", loadedData.Attack2.CooldownMs);
 
     loadedData.Attack3.RangeX = GetShort(ini, "Attack3", "RangeX", loadedData.Attack3.RangeX);
     loadedData.Attack3.RangeY = GetShort(ini, "Attack3", "RangeY", loadedData.Attack3.RangeY);
     loadedData.Attack3.Damage = GetByte(ini, "Attack3", "Damage", loadedData.Attack3.Damage);
-    loadedData.Attack3.CastTick = GetUInt(ini, "Attack3", "CastTick", loadedData.Attack3.CastTick);
+    loadedData.Attack3.CooldownMs = GetUInt(ini, "Attack3", "CooldownMs", loadedData.Attack3.CooldownMs);
 
     loadedData.ServerDebug.RenderPlayerLineMax = GetInt(
         ini,
@@ -250,7 +231,7 @@ bool CGameDataLoader::LoadGameData(const char* filePath, GameData& outData)
         loadedData.ServerDebug.RenderClearExtraLineCount
     );
 
-    loadedData.ServerDebug.MaxFixedDeltaMs = GetUInt64(
+    loadedData.ServerDebug.MaxFixedDeltaMs = GetUInt(
         ini,
         "ServerDebug",
         "MaxFixedDeltaMs",

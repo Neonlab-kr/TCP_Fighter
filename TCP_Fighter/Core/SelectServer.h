@@ -5,18 +5,17 @@
 #endif
 
 #include <winsock2.h>
-#include <windows.h>
 #include <memory>
 #include <cstdint>
 
 #include "Config.h"
 #include "Session.h"
 
-class CAsyncSelectServer
+class CSelectServer
 {
 public:
-    CAsyncSelectServer();
-    virtual ~CAsyncSelectServer();
+    CSelectServer();
+    virtual ~CSelectServer();
 
     bool Init(const ServerConfig& config);
     void UpdateNetwork();
@@ -49,22 +48,19 @@ protected:
     }
 
 private:
-    static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
-    bool CreateMessageWindow();
-    void DestroyMessageWindow();
-    void OnNetworkMessage(WPARAM wParam, LPARAM lParam);
+    void BuildFdSets(fd_set& readSet, fd_set& writeSet, bool& hasWriteSocket);
     void AcceptProc();
     void RecvProc(CSession* session);
     void SendProc(CSession* session);
-    CSession* FindSession(SOCKET socket);
     CSession* FindEmptySessionSlot();
     void RemovePendingSessions();
 
 private:
+    static constexpr int SELECT_SOCKET_LIMIT = FD_SETSIZE;
+    static constexpr int SELECT_MAX_CLIENT_SESSION = FD_SETSIZE - 1;
+
     ServerConfig m_Config;
     SOCKET m_ListenSocket;
-    HWND m_hWnd;
     std::uint64_t m_NextSessionId;
     bool m_Initialized;
     std::unique_ptr<CSession[]> m_Sessions;

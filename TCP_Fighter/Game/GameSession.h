@@ -7,7 +7,7 @@ class CSession;
 struct GameSession
 {
     CSession* NetSession = nullptr;
-    unsigned __int64 AttackLockUntilTick = 0;
+    std::uint32_t AttackLockUntilTimeMs = 0;
     int PlayerId = -1;
     short X = 0;
     short Y = 0;
