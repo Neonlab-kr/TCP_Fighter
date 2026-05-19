@@ -153,6 +153,7 @@ private:
     std::unique_ptr<GameSession[]> m_GameSessions;
     std::unique_ptr<CSession*[]> m_DeadSessionBuffer;
     CPacket m_PacketBuffer;
+    CPacket m_SendPacketBuffer;
     std::uint32_t m_CurrentTimeMs;
     std::uint32_t m_LastLoopTimeMs;
     std::uint32_t m_FixedUpdateAccumulatorMs;

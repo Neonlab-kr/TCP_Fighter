@@ -112,13 +112,13 @@ void CGameServer::OnAccept(CSession* session)
 
     CLogger::Info("Client accepted. session=%llu, player=%d, total=%d", session->GetSessionId(), joined.PlayerId, GetSessionCount());
 
-    CPacket myPacket(dfPACKET_MAX_SIZE);
-    MakePacket_CreateMyCharacter(myPacket, joined.PlayerId, joined.Direction, joined.X, joined.Y, joined.HP);
-    SendUnicast(session, myPacket);
+    m_SendPacketBuffer.Clear();
+    MakePacket_CreateMyCharacter(m_SendPacketBuffer, joined.PlayerId, joined.Direction, joined.X, joined.Y, joined.HP);
+    SendUnicast(session, m_SendPacketBuffer);
 
-    CPacket newOtherPacket(dfPACKET_MAX_SIZE);
-    MakePacket_CreateOtherCharacter(newOtherPacket, joined.PlayerId, joined.Direction, joined.X, joined.Y, joined.HP);
-    SendBroadcast(session, newOtherPacket);
+    m_SendPacketBuffer.Clear();
+    MakePacket_CreateOtherCharacter(m_SendPacketBuffer, joined.PlayerId, joined.Direction, joined.X, joined.Y, joined.HP);
+    SendBroadcast(session, m_SendPacketBuffer);
 
     for (int i = 0; i < m_MaxGameSession; ++i)
     {
@@ -127,9 +127,9 @@ void CGameServer::OnAccept(CSession* session)
         if (!other.Active || other.NetSession == session)
             continue;
 
-        CPacket oldOtherPacket(dfPACKET_MAX_SIZE);
-        MakePacket_CreateOtherCharacter(oldOtherPacket, other.PlayerId, other.Direction, other.X, other.Y, other.HP);
-        SendUnicast(session, oldOtherPacket);
+        m_SendPacketBuffer.Clear();
+        MakePacket_CreateOtherCharacter(m_SendPacketBuffer, other.PlayerId, other.Direction, other.X, other.Y, other.HP);
+        SendUnicast(session, m_SendPacketBuffer);
     }
 }
 
@@ -144,9 +144,9 @@ void CGameServer::OnRelease(CSession* session)
 
     CLogger::Info("Client released. session=%llu, player=%d", session->GetSessionId(), playerId);
 
-    CPacket deletePacket(dfPACKET_MAX_SIZE);
-    MakePacket_DeleteCharacter(deletePacket, playerId);
-    SendBroadcast(session, deletePacket);
+    m_SendPacketBuffer.Clear();
+    MakePacket_DeleteCharacter(m_SendPacketBuffer, playerId);
+    SendBroadcast(session, m_SendPacketBuffer);
 
     released->Active = false;
     released->NetSession = nullptr;
