@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <new>
 
 class CPacket
 {
@@ -12,10 +13,20 @@ public:
     };
 
     inline CPacket()
+        : m_chpBuffer(m_chDefaultBuffer)
+        , m_iBufferSize(eBUFFER_DEFAULT)
+        , m_iWritePos(0)
+        , m_iReadPos(0)
+        , m_bError(false)
     {
     }
 
     inline explicit CPacket(int bufferSize)
+        : m_chpBuffer(m_chDefaultBuffer)
+        , m_iBufferSize(eBUFFER_DEFAULT)
+        , m_iWritePos(0)
+        , m_iReadPos(0)
+        , m_bError(false)
     {
         if (bufferSize <= 0)
             return;
@@ -26,7 +37,14 @@ public:
             return;
         }
 
-        m_chpBuffer = new char[bufferSize];
+        char* dynamicBuffer = new (std::nothrow) char[bufferSize];
+        if (dynamicBuffer == nullptr)
+        {
+            m_bError = true;
+            return;
+        }
+
+        m_chpBuffer = dynamicBuffer;
         m_iBufferSize = bufferSize;
     }
 
@@ -35,7 +53,7 @@ public:
         if (m_chpBuffer != m_chDefaultBuffer)
         {
             delete[] m_chpBuffer;
-            m_chpBuffer = nullptr;
+            m_chpBuffer = m_chDefaultBuffer;
         }
     }
 
@@ -56,6 +74,7 @@ public:
     inline int GetReadSize() const { return m_iWritePos - m_iReadPos; }
     inline int GetWriteSize() const { return m_iBufferSize - m_iWritePos; }
     inline bool IsError() const { return m_bError; }
+    inline bool IsDynamicBuffer() const { return m_chpBuffer != m_chDefaultBuffer; }
 
     inline char* GetBufferPtr() { return m_chpBuffer; }
     inline const char* GetBufferPtr() const { return m_chpBuffer; }
@@ -125,186 +144,141 @@ public:
         }
 
         if (readSize != size)
+        {
+            if (dest != nullptr && size > 0)
+                std::memset(dest, 0, static_cast<std::size_t>(size));
+
             m_bError = true;
+        }
 
         return readSize;
     }
 
     inline CPacket& operator<<(std::int8_t value)
     {
-        if (PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-            m_bError = true;
+        PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator<<(std::uint8_t value)
     {
-        if (PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-            m_bError = true;
+        PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator<<(std::int16_t value)
     {
-        if (PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-            m_bError = true;
+        PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator<<(std::uint16_t value)
     {
-        if (PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-            m_bError = true;
+        PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator<<(std::int32_t value)
     {
-        if (PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-            m_bError = true;
+        PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator<<(std::uint32_t value)
     {
-        if (PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-            m_bError = true;
+        PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator<<(std::int64_t value)
     {
-        if (PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-            m_bError = true;
+        PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator<<(std::uint64_t value)
     {
-        if (PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-            m_bError = true;
+        PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator<<(float value)
     {
-        if (PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-            m_bError = true;
+        PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator<<(double value)
     {
-        if (PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-            m_bError = true;
+        PutData(reinterpret_cast<const char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator>>(std::int8_t& value)
     {
-        if (GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-        {
-            value = 0;
-            m_bError = true;
-        }
+        GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator>>(std::uint8_t& value)
     {
-        if (GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-        {
-            value = 0;
-            m_bError = true;
-        }
+        GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator>>(std::int16_t& value)
     {
-        if (GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-        {
-            value = 0;
-            m_bError = true;
-        }
+        GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator>>(std::uint16_t& value)
     {
-        if (GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-        {
-            value = 0;
-            m_bError = true;
-        }
+        GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator>>(std::int32_t& value)
     {
-        if (GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-        {
-            value = 0;
-            m_bError = true;
-        }
+        GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator>>(std::uint32_t& value)
     {
-        if (GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-        {
-            value = 0;
-            m_bError = true;
-        }
+        GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator>>(std::int64_t& value)
     {
-        if (GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-        {
-            value = 0;
-            m_bError = true;
-        }
+        GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator>>(std::uint64_t& value)
     {
-        if (GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-        {
-            value = 0;
-            m_bError = true;
-        }
+        GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator>>(float& value)
     {
-        if (GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-        {
-            value = 0.0f;
-            m_bError = true;
-        }
+        GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
     inline CPacket& operator>>(double& value)
     {
-        if (GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value))) != static_cast<int>(sizeof(value)))
-        {
-            value = 0.0;
-            m_bError = true;
-        }
+        GetData(reinterpret_cast<char*>(&value), static_cast<int>(sizeof(value)));
         return *this;
     }
 
 private:
     char m_chDefaultBuffer[eBUFFER_DEFAULT]{};
-    char* m_chpBuffer = m_chDefaultBuffer;
-    int m_iBufferSize = eBUFFER_DEFAULT;
-    int m_iWritePos = 0;
-    int m_iReadPos = 0;
-    bool m_bError = false;
+    char* m_chpBuffer;
+    int m_iBufferSize;
+    int m_iWritePos;
+    int m_iReadPos;
+    bool m_bError;
 };

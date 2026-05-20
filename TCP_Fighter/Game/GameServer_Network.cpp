@@ -42,14 +42,14 @@ void CGameServer::OnRecv(CSession* session)
         if (session->RecvBuffer.GetUseSize() < packetSize)
             return;
 
-        m_PacketBuffer.Clear();
-        const int dequeueRet = session->RecvBuffer.Dequeue(m_PacketBuffer.GetWriteBufferPtr(), packetSize);
+        CPacket packet(packetSize);
+        const int dequeueRet = session->RecvBuffer.Dequeue(packet.GetWriteBufferPtr(), packetSize);
 
         if (dequeueRet != packetSize)
             return;
 
-        m_PacketBuffer.MoveWritePos(packetSize);
-        ProcessPacket(session, m_PacketBuffer);
+        packet.MoveWritePos(packetSize);
+        ProcessPacket(session, packet);
 
         if (session->DisconnectPending)
             return;
