@@ -1,10 +1,10 @@
 #include "GameServer.h"
-#include "PacketDefine.h"
+#include "PacketMaker.h"
 #include "../Core/Session.h"
 
 bool CGameServer::PacketProc_MoveStart(CSession* session, CPacket& packet)
 {
-    if (!ValidatePayloadSize(packet, dfPACKET_SIZE_CS_MOVE_START))
+    if (!ValidatePayloadSize(packet, dfPACKET_PAYLOAD_SIZE_CS_MOVE_START))
     {
         Disconnect(session);
         return false;
@@ -13,9 +13,7 @@ bool CGameServer::PacketProc_MoveStart(CSession* session, CPacket& packet)
     std::uint8_t direction = 0;
     short x = 0;
     short y = 0;
-    packet >> direction >> x >> y;
-
-    if (packet.IsError() || !ValidateDirection(direction))
+    if (!ReadPayload_CS_MOVE_START(packet, direction, x, y) || !ValidateDirection(direction))
     {
         Disconnect(session);
         return false;
@@ -34,7 +32,7 @@ bool CGameServer::PacketProc_MoveStart(CSession* session, CPacket& packet)
 
 bool CGameServer::PacketProc_MoveStop(CSession* session, CPacket& packet)
 {
-    if (!ValidatePayloadSize(packet, dfPACKET_SIZE_CS_MOVE_STOP))
+    if (!ValidatePayloadSize(packet, dfPACKET_PAYLOAD_SIZE_CS_MOVE_STOP))
     {
         Disconnect(session);
         return false;
@@ -43,9 +41,7 @@ bool CGameServer::PacketProc_MoveStop(CSession* session, CPacket& packet)
     std::uint8_t direction = 0;
     short x = 0;
     short y = 0;
-    packet >> direction >> x >> y;
-
-    if (packet.IsError() || !ValidateDirection(direction))
+    if (!ReadPayload_CS_MOVE_STOP(packet, direction, x, y) || !ValidateDirection(direction))
     {
         Disconnect(session);
         return false;
@@ -64,7 +60,7 @@ bool CGameServer::PacketProc_MoveStop(CSession* session, CPacket& packet)
 
 bool CGameServer::PacketProc_Attack1(CSession* session, CPacket& packet)
 {
-    if (!ValidatePayloadSize(packet, dfPACKET_SIZE_CS_ATTACK1))
+    if (!ValidatePayloadSize(packet, dfPACKET_PAYLOAD_SIZE_CS_ATTACK1))
     {
         Disconnect(session);
         return false;
@@ -73,9 +69,7 @@ bool CGameServer::PacketProc_Attack1(CSession* session, CPacket& packet)
     std::uint8_t direction = 0;
     short x = 0;
     short y = 0;
-    packet >> direction >> x >> y;
-
-    if (packet.IsError() || !ValidateDirection(direction))
+    if (!ReadPayload_CS_ATTACK1(packet, direction, x, y) || !ValidateDirection(direction))
     {
         Disconnect(session);
         return false;
@@ -94,7 +88,7 @@ bool CGameServer::PacketProc_Attack1(CSession* session, CPacket& packet)
 
 bool CGameServer::PacketProc_Attack2(CSession* session, CPacket& packet)
 {
-    if (!ValidatePayloadSize(packet, dfPACKET_SIZE_CS_ATTACK2))
+    if (!ValidatePayloadSize(packet, dfPACKET_PAYLOAD_SIZE_CS_ATTACK2))
     {
         Disconnect(session);
         return false;
@@ -103,9 +97,7 @@ bool CGameServer::PacketProc_Attack2(CSession* session, CPacket& packet)
     std::uint8_t direction = 0;
     short x = 0;
     short y = 0;
-    packet >> direction >> x >> y;
-
-    if (packet.IsError() || !ValidateDirection(direction))
+    if (!ReadPayload_CS_ATTACK2(packet, direction, x, y) || !ValidateDirection(direction))
     {
         Disconnect(session);
         return false;
@@ -124,7 +116,7 @@ bool CGameServer::PacketProc_Attack2(CSession* session, CPacket& packet)
 
 bool CGameServer::PacketProc_Attack3(CSession* session, CPacket& packet)
 {
-    if (!ValidatePayloadSize(packet, dfPACKET_SIZE_CS_ATTACK3))
+    if (!ValidatePayloadSize(packet, dfPACKET_PAYLOAD_SIZE_CS_ATTACK3))
     {
         Disconnect(session);
         return false;
@@ -133,9 +125,7 @@ bool CGameServer::PacketProc_Attack3(CSession* session, CPacket& packet)
     std::uint8_t direction = 0;
     short x = 0;
     short y = 0;
-    packet >> direction >> x >> y;
-
-    if (packet.IsError() || !ValidateDirection(direction))
+    if (!ReadPayload_CS_ATTACK3(packet, direction, x, y) || !ValidateDirection(direction))
     {
         Disconnect(session);
         return false;
@@ -154,7 +144,7 @@ bool CGameServer::PacketProc_Attack3(CSession* session, CPacket& packet)
 
 bool CGameServer::PacketProc_Sync(CSession* session, CPacket& packet)
 {
-    if (!ValidatePayloadSize(packet, dfPACKET_SIZE_CS_SYNC))
+    if (!ValidatePayloadSize(packet, dfPACKET_PAYLOAD_SIZE_CS_SYNC))
     {
         Disconnect(session);
         return false;
@@ -162,9 +152,7 @@ bool CGameServer::PacketProc_Sync(CSession* session, CPacket& packet)
 
     short x = 0;
     short y = 0;
-    packet >> x >> y;
-
-    if (packet.IsError())
+    if (!ReadPayload_CS_SYNC(packet, x, y))
     {
         Disconnect(session);
         return false;

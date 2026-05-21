@@ -5,25 +5,56 @@ VisualStudioVersion = 16.0.37301.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TCP_Fighter", "TCP_Fighter\TCP_Fighter.vcxproj", "{AAC896DA-7561-4E4A-A041-061BA02C3F19}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{C6C32AEF-AD73-428D-A33B-6129487BF878}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PacketGenerator", "Tools\PacketGenerator\PacketGenerator.csproj", "{28F47409-F4F1-4D3B-9FC1-B99DE5F3308F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{BF75CEFA-CB49-42EC-BC04-A9CE1925A23B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Generated", "Generated", "{4C6AED03-E3D8-44FC-8E55-53C24B8F1DBC}"
+	ProjectSection(SolutionItems) = preProject
+		Client\Generated\PacketProtocol.cs = Client\Generated\PacketProtocol.cs
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AAC896DA-7561-4E4A-A041-061BA02C3F19}.Debug|Any CPU.ActiveCfg = Debug|Win32
 		{AAC896DA-7561-4E4A-A041-061BA02C3F19}.Debug|x64.ActiveCfg = Debug|x64
 		{AAC896DA-7561-4E4A-A041-061BA02C3F19}.Debug|x64.Build.0 = Debug|x64
 		{AAC896DA-7561-4E4A-A041-061BA02C3F19}.Debug|x86.ActiveCfg = Debug|Win32
 		{AAC896DA-7561-4E4A-A041-061BA02C3F19}.Debug|x86.Build.0 = Debug|Win32
+		{AAC896DA-7561-4E4A-A041-061BA02C3F19}.Release|Any CPU.ActiveCfg = Release|Win32
 		{AAC896DA-7561-4E4A-A041-061BA02C3F19}.Release|x64.ActiveCfg = Release|x64
 		{AAC896DA-7561-4E4A-A041-061BA02C3F19}.Release|x64.Build.0 = Release|x64
 		{AAC896DA-7561-4E4A-A041-061BA02C3F19}.Release|x86.ActiveCfg = Release|Win32
 		{AAC896DA-7561-4E4A-A041-061BA02C3F19}.Release|x86.Build.0 = Release|Win32
+		{28F47409-F4F1-4D3B-9FC1-B99DE5F3308F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28F47409-F4F1-4D3B-9FC1-B99DE5F3308F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28F47409-F4F1-4D3B-9FC1-B99DE5F3308F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{28F47409-F4F1-4D3B-9FC1-B99DE5F3308F}.Debug|x64.Build.0 = Debug|Any CPU
+		{28F47409-F4F1-4D3B-9FC1-B99DE5F3308F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{28F47409-F4F1-4D3B-9FC1-B99DE5F3308F}.Debug|x86.Build.0 = Debug|Any CPU
+		{28F47409-F4F1-4D3B-9FC1-B99DE5F3308F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28F47409-F4F1-4D3B-9FC1-B99DE5F3308F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{28F47409-F4F1-4D3B-9FC1-B99DE5F3308F}.Release|x64.ActiveCfg = Release|Any CPU
+		{28F47409-F4F1-4D3B-9FC1-B99DE5F3308F}.Release|x64.Build.0 = Release|Any CPU
+		{28F47409-F4F1-4D3B-9FC1-B99DE5F3308F}.Release|x86.ActiveCfg = Release|Any CPU
+		{28F47409-F4F1-4D3B-9FC1-B99DE5F3308F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{28F47409-F4F1-4D3B-9FC1-B99DE5F3308F} = {C6C32AEF-AD73-428D-A33B-6129487BF878}
+		{4C6AED03-E3D8-44FC-8E55-53C24B8F1DBC} = {BF75CEFA-CB49-42EC-BC04-A9CE1925A23B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {49080AA3-E878-4F02-A90E-C9E4E8D72529}

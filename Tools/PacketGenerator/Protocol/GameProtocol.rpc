@@ -1,0 +1,24 @@
+packet_code = 0x89;
+header_size = 3;
+max_payload_size = 255;
+
+sc CreateMyCharacter    = 0(int32 id, uint8 direction, int16 x, int16 y, uint8 hp);
+sc CreateOtherCharacter = 1(int32 id, uint8 direction, int16 x, int16 y, uint8 hp);
+sc DeleteCharacter      = 2(int32 id);
+
+cs MoveStart = 10(uint8 direction, int16 x, int16 y);
+sc MoveStart = 11(int32 id, uint8 direction, int16 x, int16 y);
+cs MoveStop  = 12(uint8 direction, int16 x, int16 y);
+sc MoveStop  = 13(int32 id, uint8 direction, int16 x, int16 y);
+
+cs Attack1 = 20(uint8 direction, int16 x, int16 y);
+sc Attack1 = 21(int32 id, uint8 direction, int16 x, int16 y);
+cs Attack2 = 22(uint8 direction, int16 x, int16 y);
+sc Attack2 = 23(int32 id, uint8 direction, int16 x, int16 y);
+cs Attack3 = 24(uint8 direction, int16 x, int16 y);
+sc Attack3 = 25(int32 id, uint8 direction, int16 x, int16 y);
+
+sc Damage = 30(int32 attackId, int32 damageId, uint8 damageHp);
+
+cs Sync = 250(int16 x, int16 y);
+sc Sync = 251(int32 id, int16 x, int16 y);

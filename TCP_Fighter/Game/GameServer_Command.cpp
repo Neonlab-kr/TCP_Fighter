@@ -41,7 +41,7 @@ void CGameServer::StartMove(GameSession& gameSession, std::uint8_t direction, sh
     gameSession.Moving = true;
 
     CPacket sendPacket(dfPACKET_MAX_SIZE);
-    MakePacket_MoveStart(sendPacket, gameSession.PlayerId, direction, gameSession.X, gameSession.Y);
+    MakePacket_SC_MOVE_START(sendPacket, gameSession.PlayerId, direction, gameSession.X, gameSession.Y);
     SendBroadcast(requestSession, sendPacket);
 }
 
@@ -57,7 +57,7 @@ void CGameServer::StopMoveRequest(GameSession& gameSession, std::uint8_t directi
     gameSession.Moving = false;
 
     CPacket sendPacket(dfPACKET_MAX_SIZE);
-    MakePacket_MoveStop(sendPacket, gameSession.PlayerId, direction, gameSession.X, gameSession.Y);
+    MakePacket_SC_MOVE_STOP(sendPacket, gameSession.PlayerId, direction, gameSession.X, gameSession.Y);
     SendBroadcast(requestSession, sendPacket);
 }
 

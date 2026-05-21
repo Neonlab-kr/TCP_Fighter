@@ -87,9 +87,6 @@
     <ClCompile Include="Game\GameServer_Send.cpp">
       <Filter>Game\Server</Filter>
     </ClCompile>
-    <ClCompile Include="Core\SerializationBuffer.cpp">
-      <Filter>Core\Container</Filter>
-    </ClCompile>
     <ClCompile Include="Core\IniReader.cpp">
       <Filter>Core\File</Filter>
     </ClCompile>

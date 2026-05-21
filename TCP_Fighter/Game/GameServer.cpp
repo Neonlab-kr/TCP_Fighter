@@ -113,11 +113,11 @@ void CGameServer::OnAccept(CSession* session)
     CLogger::Info("Client accepted. session=%llu, player=%d, total=%d", session->GetSessionId(), joined.PlayerId, GetSessionCount());
 
     CPacket myPacket(dfPACKET_MAX_SIZE);
-    MakePacket_CreateMyCharacter(myPacket, joined.PlayerId, joined.Direction, joined.X, joined.Y, joined.HP);
+    MakePacket_SC_CREATE_MY_CHARACTER(myPacket, joined.PlayerId, joined.Direction, joined.X, joined.Y, joined.HP);
     SendUnicast(session, myPacket);
 
     CPacket newOtherPacket(dfPACKET_MAX_SIZE);
-    MakePacket_CreateOtherCharacter(newOtherPacket, joined.PlayerId, joined.Direction, joined.X, joined.Y, joined.HP);
+    MakePacket_SC_CREATE_OTHER_CHARACTER(newOtherPacket, joined.PlayerId, joined.Direction, joined.X, joined.Y, joined.HP);
     SendBroadcast(session, newOtherPacket);
 
     for (int i = 0; i < m_MaxGameSession; ++i)
@@ -128,13 +128,13 @@ void CGameServer::OnAccept(CSession* session)
             continue;
 
         CPacket oldOtherPacket(dfPACKET_MAX_SIZE);
-        MakePacket_CreateOtherCharacter(oldOtherPacket, other.PlayerId, other.Direction, other.X, other.Y, other.HP);
+        MakePacket_SC_CREATE_OTHER_CHARACTER(oldOtherPacket, other.PlayerId, other.Direction, other.X, other.Y, other.HP);
         SendUnicast(session, oldOtherPacket);
 
         if (other.Moving)
         {
             CPacket oldMovePacket(dfPACKET_MAX_SIZE);
-            MakePacket_MoveStart(oldMovePacket, other.PlayerId, other.Direction, other.X, other.Y);
+            MakePacket_SC_MOVE_START(oldMovePacket, other.PlayerId, other.Direction, other.X, other.Y);
             SendUnicast(session, oldMovePacket);
         }
     }
@@ -152,7 +152,7 @@ void CGameServer::OnRelease(CSession* session)
     CLogger::Info("Client released. session=%llu, player=%d", session->GetSessionId(), playerId);
 
     CPacket deletePacket(dfPACKET_MAX_SIZE);
-    MakePacket_DeleteCharacter(deletePacket, playerId);
+    MakePacket_SC_DELETE_CHARACTER(deletePacket, playerId);
     SendBroadcast(session, deletePacket);
 
     released->Active = false;

@@ -24,7 +24,6 @@
     <ClCompile Include="Core\Logger.cpp" />
     <ClCompile Include="Core\RingBuffer.cpp" />
     <ClCompile Include="Core\SelectServer.cpp" />
-    <ClCompile Include="Core\SerializationBuffer.cpp" />
     <ClCompile Include="Core\Session.cpp" />
     <ClCompile Include="Game\GameData.cpp" />
     <ClCompile Include="Game\GameMain.cpp" />
