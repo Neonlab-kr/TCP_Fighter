@@ -130,6 +130,13 @@ void CGameServer::OnAccept(CSession* session)
         CPacket oldOtherPacket(dfPACKET_MAX_SIZE);
         MakePacket_CreateOtherCharacter(oldOtherPacket, other.PlayerId, other.Direction, other.X, other.Y, other.HP);
         SendUnicast(session, oldOtherPacket);
+
+        if (other.Moving)
+        {
+            CPacket oldMovePacket(dfPACKET_MAX_SIZE);
+            MakePacket_MoveStart(oldMovePacket, other.PlayerId, other.Direction, other.X, other.Y);
+            SendUnicast(session, oldMovePacket);
+        }
     }
 }
 
