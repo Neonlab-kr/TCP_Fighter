@@ -1,5 +1,4 @@
 #include "GameServer.h"
-#include "PacketMaker.h"
 #include "GameMoveLogic.h"
 #include "GameAttackLogic.h"
 #include "../Core/Logger.h"
@@ -40,9 +39,7 @@ void CGameServer::StartMove(GameSession& gameSession, std::uint8_t direction, sh
     gameSession.Direction = direction;
     gameSession.Moving = true;
 
-    CPacket sendPacket(dfPACKET_MAX_SIZE);
-    MakePacket_SC_MOVE_START(sendPacket, gameSession.PlayerId, direction, gameSession.X, gameSession.Y);
-    SendBroadcast(requestSession, sendPacket);
+    SendMoveStart(gameSession.PlayerId, direction, gameSession.X, gameSession.Y, requestSession);
 }
 
 void CGameServer::StopMoveRequest(GameSession& gameSession, std::uint8_t direction, short clientX, short clientY, CSession* requestSession)
@@ -56,9 +53,22 @@ void CGameServer::StopMoveRequest(GameSession& gameSession, std::uint8_t directi
     gameSession.Direction = direction;
     gameSession.Moving = false;
 
-    CPacket sendPacket(dfPACKET_MAX_SIZE);
-    MakePacket_SC_MOVE_STOP(sendPacket, gameSession.PlayerId, direction, gameSession.X, gameSession.Y);
-    SendBroadcast(requestSession, sendPacket);
+    for (int i = 0; i < m_MaxGameSession; ++i)
+    {
+        const GameSession& target = m_GameSessions[i];
+
+        if (!target.Active)
+            continue;
+
+        CSession* targetSession = target.NetSession;
+        if (targetSession == nullptr || targetSession->DisconnectPending)
+            continue;
+
+        if (targetSession == requestSession)
+            continue;
+
+        m_S2CProxy.MoveStop(targetSession, gameSession.PlayerId, direction, gameSession.X, gameSession.Y);
+    }
 }
 
 void CGameServer::UpdateMove(GameSession& gameSession)
@@ -87,7 +97,7 @@ void CGameServer::StopMove(GameSession& gameSession, bool sendPacket)
         SendMoveStop(gameSession.PlayerId, gameSession.Direction, gameSession.X, gameSession.Y);
 }
 
-void CGameServer::RequestAttack(GameSession& attacker, std::uint8_t attackType, std::uint8_t direction, short clientX, short clientY, CSession* requestSession)
+void CGameServer::RequestAttack(GameSession& attacker, PacketType attackType, std::uint8_t direction, short clientX, short clientY, CSession* requestSession)
 {
     const AttackGameData* attackData = GetAttackData(attackType);
 
@@ -122,7 +132,7 @@ void CGameServer::RequestAttack(GameSession& attacker, std::uint8_t attackType, 
     ProcessAttack(attacker, attackType, *attackData);
 }
 
-void CGameServer::ProcessAttack(GameSession& attacker, std::uint8_t attackType, const AttackGameData& attackData)
+void CGameServer::ProcessAttack(GameSession& attacker, PacketType attackType, const AttackGameData& attackData)
 {
     if (attackData.RangeX <= 0 || attackData.RangeY <= 0 || attackData.Damage == 0)
         return;

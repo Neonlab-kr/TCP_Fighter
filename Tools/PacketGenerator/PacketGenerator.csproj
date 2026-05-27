@@ -48,8 +48,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="Protocol\GameProtocol.rpc" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Protocol\GameProtocol.IDL" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

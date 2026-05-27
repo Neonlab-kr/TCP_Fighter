@@ -1,7 +1,6 @@
 #include "GameServer.h"
 #include "GameDefine.h"
 #include "GameData.h"
-#include "PacketMaker.h"
 #include "../Core/Config.h"
 #include "../Core/Logger.h"
 #include "../Core/Session.h"
@@ -11,6 +10,7 @@
 #include <cstdlib>
 
 CGameServer::CGameServer()
+    : m_S2CProxy(this)
 {
     m_Running = false;
     m_NextPlayerId = 1;
@@ -112,13 +112,8 @@ void CGameServer::OnAccept(CSession* session)
 
     CLogger::Info("Client accepted. session=%llu, player=%d, total=%d", session->GetSessionId(), joined.PlayerId, GetSessionCount());
 
-    CPacket myPacket(dfPACKET_MAX_SIZE);
-    MakePacket_SC_CREATE_MY_CHARACTER(myPacket, joined.PlayerId, joined.Direction, joined.X, joined.Y, joined.HP);
-    SendUnicast(session, myPacket);
-
-    CPacket newOtherPacket(dfPACKET_MAX_SIZE);
-    MakePacket_SC_CREATE_OTHER_CHARACTER(newOtherPacket, joined.PlayerId, joined.Direction, joined.X, joined.Y, joined.HP);
-    SendBroadcast(session, newOtherPacket);
+    m_S2CProxy.CreateMyCharacter(session, joined.PlayerId, joined.Direction, joined.X, joined.Y, joined.HP);
+    BroadcastCreateOtherCharacter(joined.PlayerId, joined.Direction, joined.X, joined.Y, joined.HP, session);
 
     for (int i = 0; i < m_MaxGameSession; ++i)
     {
@@ -127,16 +122,10 @@ void CGameServer::OnAccept(CSession* session)
         if (!other.Active || other.NetSession == session)
             continue;
 
-        CPacket oldOtherPacket(dfPACKET_MAX_SIZE);
-        MakePacket_SC_CREATE_OTHER_CHARACTER(oldOtherPacket, other.PlayerId, other.Direction, other.X, other.Y, other.HP);
-        SendUnicast(session, oldOtherPacket);
+        m_S2CProxy.CreateOtherCharacter(session, other.PlayerId, other.Direction, other.X, other.Y, other.HP);
 
         if (other.Moving)
-        {
-            CPacket oldMovePacket(dfPACKET_MAX_SIZE);
-            MakePacket_SC_MOVE_START(oldMovePacket, other.PlayerId, other.Direction, other.X, other.Y);
-            SendUnicast(session, oldMovePacket);
-        }
+            m_S2CProxy.MoveStart(session, other.PlayerId, other.Direction, other.X, other.Y);
     }
 }
 
@@ -151,9 +140,7 @@ void CGameServer::OnRelease(CSession* session)
 
     CLogger::Info("Client released. session=%llu, player=%d", session->GetSessionId(), playerId);
 
-    CPacket deletePacket(dfPACKET_MAX_SIZE);
-    MakePacket_SC_DELETE_CHARACTER(deletePacket, playerId);
-    SendBroadcast(session, deletePacket);
+    BroadcastDeleteCharacter(playerId, session);
 
     released->Active = false;
     released->NetSession = nullptr;

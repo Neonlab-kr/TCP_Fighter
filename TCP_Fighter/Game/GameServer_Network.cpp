@@ -1,5 +1,5 @@
 #include "GameServer.h"
-#include "PacketDefine.h"
+#include "RPC/RPCCommon.h"
 #include "../Core/Logger.h"
 #include "../Core/Session.h"
 
@@ -20,8 +20,8 @@ void CGameServer::OnRecv(CSession* session)
             return;
 
         const std::uint8_t code = header[0];
-        const std::uint8_t payloadSize = header[1];
-        const std::uint8_t type = header[2];
+        const PayloadSizeType payloadSize = static_cast<PayloadSizeType>(header[1]);
+        const PacketType type = static_cast<PacketType>(header[2]);
 
         if (code != dfPACKET_CODE)
         {
@@ -70,39 +70,18 @@ void CGameServer::ProcessPacket(CSession* session, CPacket& packet)
     }
 
     const std::uint8_t* buffer = reinterpret_cast<const std::uint8_t*>(packet.GetBufferPtr());
-    const std::uint8_t type = buffer[2];
+    const PacketType type = static_cast<PacketType>(buffer[2]);
 
     packet.MoveReadPos(dfPACKET_HEADER_SIZE);
 
-    switch (type)
+    const bool dispatched = CC2S_Stub::Dispatch(*this, session, packet, type);
+
+    if (!dispatched || packet.GetReadSize() != 0)
     {
-    case dfPACKET_CS_MOVE_START:
-        PacketProc_MoveStart(session, packet);
-        break;
-
-    case dfPACKET_CS_MOVE_STOP:
-        PacketProc_MoveStop(session, packet);
-        break;
-
-    case dfPACKET_CS_ATTACK1:
-        PacketProc_Attack1(session, packet);
-        break;
-
-    case dfPACKET_CS_ATTACK2:
-        PacketProc_Attack2(session, packet);
-        break;
-
-    case dfPACKET_CS_ATTACK3:
-        PacketProc_Attack3(session, packet);
-        break;
-
-    case dfPACKET_CS_SYNC:
-        PacketProc_Sync(session, packet);
-        break;
-
-    default:
-        CLogger::Error("Unknown packet type. session=%llu, type=%u", session->GetSessionId(), type);
+        CLogger::Error("Invalid C2S packet. session=%llu, type=%u, remain=%d",
+            session->GetSessionId(),
+            static_cast<unsigned int>(type),
+            packet.GetReadSize());
         Disconnect(session);
-        break;
     }
 }

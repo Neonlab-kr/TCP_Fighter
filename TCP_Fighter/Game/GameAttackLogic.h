@@ -2,7 +2,7 @@
 
 #include <cstdint>
 #include <cstdlib>
-#include "PacketDefine.h"
+#include "RPC/RPCCommon.h"
 
 inline bool IsAttackHitByRange(short attackerX, short attackerY, std::uint8_t direction, short targetX, short targetY, short rangeX, short rangeY)
 {

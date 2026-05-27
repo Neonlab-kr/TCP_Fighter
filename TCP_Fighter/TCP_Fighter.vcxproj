@@ -49,8 +49,9 @@
     <ClInclude Include="Game\GameMoveLogic.h" />
     <ClInclude Include="Game\GameServer.h" />
     <ClInclude Include="Game\GameSession.h" />
-    <ClInclude Include="Game\PacketDefine.h" />
-    <ClInclude Include="Game\PacketMaker.h" />
+    <ClInclude Include="Game\RPC\C2S_Stub.h" />
+    <ClInclude Include="Game\RPC\RPCCommon.h" />
+    <ClInclude Include="Game\RPC\S2C_Proxy.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resource\Config.ini" />
@@ -131,6 +132,9 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PreBuildEvent>
+      <Command>"$(SolutionDir)Tools\PacketGenerator\bin\$(Configuration)\PacketGenerator.exe"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -148,6 +152,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PreBuildEvent>
+      <Command>"$(SolutionDir)Tools\PacketGenerator\bin\$(Configuration)\PacketGenerator.exe"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -160,6 +167,9 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PreBuildEvent>
+      <Command>"$(SolutionDir)Tools\PacketGenerator\bin\$(Configuration)\PacketGenerator.exe"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -170,6 +180,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -177,6 +188,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PreBuildEvent>
+      <Command>"$(SolutionDir)Tools\PacketGenerator\bin\$(Configuration)\PacketGenerator.exe"</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

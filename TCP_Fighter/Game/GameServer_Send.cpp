@@ -1,11 +1,85 @@
 #include "GameServer.h"
-#include "PacketMaker.h"
+
+bool CGameServer::SendRPCPacket(CSession* session, const CPacket& packet)
+{
+    return SendUnicast(session, packet);
+}
+
+void CGameServer::BroadcastCreateOtherCharacter(int id, std::uint8_t direction, short x, short y, std::uint8_t hp, CSession* exceptSession)
+{
+    for (int i = 0; i < m_MaxGameSession; ++i)
+    {
+        const GameSession& target = m_GameSessions[i];
+
+        if (!target.Active)
+            continue;
+
+        CSession* targetSession = target.NetSession;
+        if (targetSession == nullptr || targetSession->DisconnectPending)
+            continue;
+
+        if (targetSession == exceptSession)
+            continue;
+
+        m_S2CProxy.CreateOtherCharacter(targetSession, id, direction, x, y, hp);
+    }
+}
+
+void CGameServer::BroadcastDeleteCharacter(int id, CSession* exceptSession)
+{
+    for (int i = 0; i < m_MaxGameSession; ++i)
+    {
+        const GameSession& target = m_GameSessions[i];
+
+        if (!target.Active)
+            continue;
+
+        CSession* targetSession = target.NetSession;
+        if (targetSession == nullptr || targetSession->DisconnectPending)
+            continue;
+
+        if (targetSession == exceptSession)
+            continue;
+
+        m_S2CProxy.DeleteCharacter(targetSession, id);
+    }
+}
+
+void CGameServer::SendMoveStart(int id, std::uint8_t direction, short x, short y, CSession* exceptSession)
+{
+    for (int i = 0; i < m_MaxGameSession; ++i)
+    {
+        const GameSession& target = m_GameSessions[i];
+
+        if (!target.Active)
+            continue;
+
+        CSession* targetSession = target.NetSession;
+        if (targetSession == nullptr || targetSession->DisconnectPending)
+            continue;
+
+        if (targetSession == exceptSession)
+            continue;
+
+        m_S2CProxy.MoveStart(targetSession, id, direction, x, y);
+    }
+}
 
 void CGameServer::SendMoveStop(int id, std::uint8_t direction, short x, short y)
 {
-    CPacket packet(dfPACKET_MAX_SIZE);
-    MakePacket_SC_MOVE_STOP(packet, id, direction, x, y);
-    SendBroadcast(nullptr, packet);
+    for (int i = 0; i < m_MaxGameSession; ++i)
+    {
+        const GameSession& target = m_GameSessions[i];
+
+        if (!target.Active)
+            continue;
+
+        CSession* targetSession = target.NetSession;
+        if (targetSession == nullptr || targetSession->DisconnectPending)
+            continue;
+
+        m_S2CProxy.MoveStop(targetSession, id, direction, x, y);
+    }
 }
 
 void CGameServer::SendSync(int id, short x, short y, CSession* targetSession)
@@ -13,40 +87,58 @@ void CGameServer::SendSync(int id, short x, short y, CSession* targetSession)
     if (targetSession == nullptr)
         return;
 
-    CPacket packet(dfPACKET_MAX_SIZE);
-    MakePacket_SC_SYNC(packet, id, x, y);
-    SendUnicast(targetSession, packet);
+    m_S2CProxy.Sync(targetSession, id, x, y);
 }
 
-void CGameServer::SendAttackPacket(std::uint8_t attackType, int id, std::uint8_t direction, short x, short y, CSession* exceptSession)
+void CGameServer::SendAttackPacket(PacketType attackType, int id, std::uint8_t direction, short x, short y, CSession* exceptSession)
 {
-    CPacket packet(dfPACKET_MAX_SIZE);
-
-    switch (attackType)
+    for (int i = 0; i < m_MaxGameSession; ++i)
     {
-    case dfPACKET_CS_ATTACK1:
-        MakePacket_SC_ATTACK1(packet, id, direction, x, y);
-        SendBroadcast(exceptSession, packet);
-        break;
+        const GameSession& target = m_GameSessions[i];
 
-    case dfPACKET_CS_ATTACK2:
-        MakePacket_SC_ATTACK2(packet, id, direction, x, y);
-        SendBroadcast(exceptSession, packet);
-        break;
+        if (!target.Active)
+            continue;
 
-    case dfPACKET_CS_ATTACK3:
-        MakePacket_SC_ATTACK3(packet, id, direction, x, y);
-        SendBroadcast(exceptSession, packet);
-        break;
+        CSession* targetSession = target.NetSession;
+        if (targetSession == nullptr || targetSession->DisconnectPending)
+            continue;
 
-    default:
-        break;
+        if (targetSession == exceptSession)
+            continue;
+
+        switch (attackType)
+        {
+        case dfPACKET_C2S_ATTACK1:
+            m_S2CProxy.Attack1(targetSession, id, direction, x, y);
+            break;
+
+        case dfPACKET_C2S_ATTACK2:
+            m_S2CProxy.Attack2(targetSession, id, direction, x, y);
+            break;
+
+        case dfPACKET_C2S_ATTACK3:
+            m_S2CProxy.Attack3(targetSession, id, direction, x, y);
+            break;
+
+        default:
+            return;
+        }
     }
 }
 
 void CGameServer::SendDamage(int attackId, int damageId, std::uint8_t damageHp)
 {
-    CPacket packet(dfPACKET_MAX_SIZE);
-    MakePacket_SC_DAMAGE(packet, attackId, damageId, damageHp);
-    SendBroadcast(nullptr, packet);
+    for (int i = 0; i < m_MaxGameSession; ++i)
+    {
+        const GameSession& target = m_GameSessions[i];
+
+        if (!target.Active)
+            continue;
+
+        CSession* targetSession = target.NetSession;
+        if (targetSession == nullptr || targetSession->DisconnectPending)
+            continue;
+
+        m_S2CProxy.Damage(targetSession, attackId, damageId, damageHp);
+    }
 }

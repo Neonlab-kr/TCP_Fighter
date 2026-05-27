@@ -19,9 +19,6 @@
     <Filter Include="Game\Session">
       <UniqueIdentifier>{98176bb5-ad2d-44ea-9dae-c650e2fe7a58}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game\Packet">
-      <UniqueIdentifier>{d7eabc76-a267-4cf3-a0a5-c08a6870716b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Core\Network">
       <UniqueIdentifier>{5f247041-2278-490f-b5c2-a43a0d433473}</UniqueIdentifier>
     </Filter>
@@ -45,6 +42,9 @@
     </Filter>
     <Filter Include="Game\Logic">
       <UniqueIdentifier>{113ea117-71e5-4747-901f-48fd8cc7fde9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\RPC">
+      <UniqueIdentifier>{d7eabc76-a267-4cf3-a0a5-c08a6870716b}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -98,9 +98,6 @@
     <ClInclude Include="Game\GameSession.h">
       <Filter>Game\Session</Filter>
     </ClInclude>
-    <ClInclude Include="Game\PacketDefine.h">
-      <Filter>Game\Packet</Filter>
-    </ClInclude>
     <ClInclude Include="Core\Session.h">
       <Filter>Core\Network</Filter>
     </ClInclude>
@@ -125,9 +122,6 @@
     <ClInclude Include="Core\SelectServer.h">
       <Filter>Core\Network</Filter>
     </ClInclude>
-    <ClInclude Include="Game\PacketMaker.h">
-      <Filter>Game\Packet</Filter>
-    </ClInclude>
     <ClInclude Include="Game\GameAttackLogic.h">
       <Filter>Game\Logic</Filter>
     </ClInclude>
@@ -139,6 +133,15 @@
     </ClInclude>
     <ClInclude Include="Core\IniReader.h">
       <Filter>Core\File</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\RPC\C2S_Stub.h">
+      <Filter>Game\RPC</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\RPC\RPCCommon.h">
+      <Filter>Game\RPC</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\RPC\S2C_Proxy.h">
+      <Filter>Game\RPC</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

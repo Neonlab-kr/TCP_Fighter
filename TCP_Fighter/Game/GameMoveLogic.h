@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include "GameData.h"
+#include "RPC/RPCCommon.h"
 
 inline bool CalcDirectionDelta(std::uint8_t direction, const MoveGameData& moveData, short& outDX, short& outDY)
 {
@@ -10,31 +11,31 @@ inline bool CalcDirectionDelta(std::uint8_t direction, const MoveGameData& moveD
 
     switch (direction)
     {
-    case 0:
+    case dfPACKET_MOVE_DIR_LL:
         outDX = static_cast<short>(-moveData.MoveXPerFrame);
         return true;
-    case 1:
+    case dfPACKET_MOVE_DIR_LU:
         outDX = static_cast<short>(-moveData.MoveXPerFrame);
         outDY = static_cast<short>(-moveData.MoveYPerFrame);
         return true;
-    case 2:
+    case dfPACKET_MOVE_DIR_UU:
         outDY = static_cast<short>(-moveData.MoveYPerFrame);
         return true;
-    case 3:
+    case dfPACKET_MOVE_DIR_RU:
         outDX = moveData.MoveXPerFrame;
         outDY = static_cast<short>(-moveData.MoveYPerFrame);
         return true;
-    case 4:
+    case dfPACKET_MOVE_DIR_RR:
         outDX = moveData.MoveXPerFrame;
         return true;
-    case 5:
+    case dfPACKET_MOVE_DIR_RD:
         outDX = moveData.MoveXPerFrame;
         outDY = moveData.MoveYPerFrame;
         return true;
-    case 6:
+    case dfPACKET_MOVE_DIR_DD:
         outDY = moveData.MoveYPerFrame;
         return true;
-    case 7:
+    case dfPACKET_MOVE_DIR_LD:
         outDX = static_cast<short>(-moveData.MoveXPerFrame);
         outDY = moveData.MoveYPerFrame;
         return true;

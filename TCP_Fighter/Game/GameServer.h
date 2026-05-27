@@ -6,10 +6,14 @@
 #include "../Core/SelectServer.h"
 #include "GameSession.h"
 #include "GameData.h"
-#include "PacketDefine.h"
-#include "../Core/SerializationBuffer.h"
+#include "RPC/RPCCommon.h"
+#include "RPC/C2S_Stub.h"
+#include "RPC/S2C_Proxy.h"
 
-class CGameServer : public CSelectServer
+class CGameServer
+    : public CSelectServer
+    , public IC2S_Handler
+    , public IS2C_Sender
 {
 public:
     CGameServer();
@@ -26,16 +30,20 @@ protected:
     void OnError(int errorCode) override;
 
 private:
+    bool SendRPCPacket(CSession* session, const CPacket& packet) override;
+
+private:
+    bool OnMoveStart(CSession* session, std::uint8_t direction, std::int16_t x, std::int16_t y) override;
+    bool OnMoveStop(CSession* session, std::uint8_t direction, std::int16_t x, std::int16_t y) override;
+    bool OnAttack1(CSession* session, std::uint8_t direction, std::int16_t x, std::int16_t y) override;
+    bool OnAttack2(CSession* session, std::uint8_t direction, std::int16_t x, std::int16_t y) override;
+    bool OnAttack3(CSession* session, std::uint8_t direction, std::int16_t x, std::int16_t y) override;
+    bool OnSync(CSession* session, std::int16_t x, std::int16_t y) override;
+
+private:
     void FixedUpdateGame();
     void Render();
     void ProcessPacket(CSession* session, CPacket& packet);
-
-    bool PacketProc_MoveStart(CSession* session, CPacket& packet);
-    bool PacketProc_MoveStop(CSession* session, CPacket& packet);
-    bool PacketProc_Attack1(CSession* session, CPacket& packet);
-    bool PacketProc_Attack2(CSession* session, CPacket& packet);
-    bool PacketProc_Attack3(CSession* session, CPacket& packet);
-    bool PacketProc_Sync(CSession* session, CPacket& packet);
 
     inline GameSession* FindGameSession(CSession* session)
     {
@@ -51,26 +59,30 @@ private:
     void StopMoveRequest(GameSession& gameSession, std::uint8_t direction, short clientX, short clientY, CSession* requestSession);
     void UpdateMove(GameSession& gameSession);
     void StopMove(GameSession& gameSession, bool sendPacket);
+    void SendMoveStart(int id, std::uint8_t direction, short x, short y, CSession* exceptSession);
     void SendMoveStop(int id, std::uint8_t direction, short x, short y);
     void SendSync(int id, short x, short y, CSession* targetSession);
 
-    void RequestAttack(GameSession& attacker, std::uint8_t attackType, std::uint8_t direction, short clientX, short clientY, CSession* requestSession);
-    void ProcessAttack(GameSession& attacker, std::uint8_t attackType, const AttackGameData& attackData);
-    void SendAttackPacket(std::uint8_t attackType, int id, std::uint8_t direction, short x, short y, CSession* exceptSession);
+    void RequestAttack(GameSession& attacker, PacketType attackType, std::uint8_t direction, short clientX, short clientY, CSession* requestSession);
+    void ProcessAttack(GameSession& attacker, PacketType attackType, const AttackGameData& attackData);
+    void SendAttackPacket(PacketType attackType, int id, std::uint8_t direction, short x, short y, CSession* exceptSession);
     void SendDamage(int attackId, int damageId, std::uint8_t damageHp);
     void ProcessDeadPlayer(CSession* session);
 
-    inline const AttackGameData* GetAttackData(std::uint8_t attackType) const
+    void BroadcastCreateOtherCharacter(int id, std::uint8_t direction, short x, short y, std::uint8_t hp, CSession* exceptSession);
+    void BroadcastDeleteCharacter(int id, CSession* exceptSession);
+
+    inline const AttackGameData* GetAttackData(PacketType attackType) const
     {
         switch (attackType)
         {
-        case dfPACKET_CS_ATTACK1:
+        case dfPACKET_C2S_ATTACK1:
             return &m_GameData.Attack1;
 
-        case dfPACKET_CS_ATTACK2:
+        case dfPACKET_C2S_ATTACK2:
             return &m_GameData.Attack2;
 
-        case dfPACKET_CS_ATTACK3:
+        case dfPACKET_C2S_ATTACK3:
             return &m_GameData.Attack3;
 
         default:
@@ -86,11 +98,6 @@ private:
     inline bool IsAttackLocked(const GameSession& gameSession, std::uint32_t nowMs) const
     {
         return gameSession.AttackLockUntilTimeMs != 0 && IsTimeBefore(nowMs, gameSession.AttackLockUntilTimeMs);
-    }
-
-    inline bool ValidatePayloadSize(const CPacket& packet, int expectedPayloadSize) const
-    {
-        return packet.GetReadSize() == expectedPayloadSize;
     }
 
     inline bool ValidateDirection(std::uint8_t direction) const
@@ -156,4 +163,5 @@ private:
     std::uint32_t m_LastLoopTimeMs;
     std::uint32_t m_FixedUpdateAccumulatorMs;
     std::uint32_t m_ClientFrameMs;
+    CS2C_Proxy m_S2CProxy;
 };
