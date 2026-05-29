@@ -106,11 +106,41 @@ namespace PacketGenerator
         }
     }
 
+    internal sealed class GeneratorConfig
+    {
+        public string ProtocolPath = "Tools/PacketGenerator/Protocol/GameProtocol.IDL";
+        public string ServerRpcOutputPath = "TCP_FIGHTER/Game/RPC";
+        public string ClientRpcOutputPath = "Client/Generated/RPC";
+        public string CsNamespace = "Generated.RPC";
+
+        public readonly List<string> CppCommonIncludes = new List<string>();
+        public readonly List<string> CppStubIncludes = new List<string>();
+        public readonly List<string> CppProxyIncludes = new List<string>();
+
+        public void ApplyDefaults()
+        {
+            if (CppCommonIncludes.Count == 0)
+                CppCommonIncludes.Add("<cstdint>");
+
+            if (CppStubIncludes.Count == 0)
+            {
+                CppStubIncludes.Add("RPCCommon.h");
+                CppStubIncludes.Add("Core/SerializationBuffer.h");
+                CppStubIncludes.Add("Core/Session.h");
+            }
+
+            if (CppProxyIncludes.Count == 0)
+            {
+                CppProxyIncludes.Add("RPCCommon.h");
+                CppProxyIncludes.Add("Core/SerializationBuffer.h");
+                CppProxyIncludes.Add("Core/Session.h");
+            }
+        }
+    }
+
     internal static class Program
     {
-        private const string ServerGameRelativePath = "TCP_FIGHTER/Game";
-        private const string ClientGeneratedRelativePath = "Client/Generated/RPC";
-        private const string ProtocolRelativePath = "Tools/PacketGenerator/Protocol/GameProtocol.IDL";
+        private const string ConfigRelativePath = "Tools/PacketGenerator/PacketGenerator.ini";
 
         private static readonly Dictionary<string, TypeInfo> Types = CreateTypeMap();
 
@@ -118,23 +148,30 @@ namespace PacketGenerator
         {
             try
             {
-                string root = PathUtil.FindRoot(ProtocolRelativePath);
-                string protocolPath = PathUtil.Combine(root, ProtocolRelativePath);
-                string serverRpcPath = Path.Combine(PathUtil.Combine(root, ServerGameRelativePath), "RPC");
-                string clientRpcPath = PathUtil.Combine(root, ClientGeneratedRelativePath);
+                string configRelativePath = args.Length > 0 ? args[0] : ConfigRelativePath;
+                string root = PathUtil.FindRoot(configRelativePath);
+                string configPath = PathUtil.Combine(root, configRelativePath);
+
+                GeneratorConfig config = GeneratorConfigParser.Parse(configPath);
+                config.ApplyDefaults();
+
+                string protocolPath = PathUtil.Combine(root, config.ProtocolPath);
+                string serverRpcPath = PathUtil.Combine(root, config.ServerRpcOutputPath);
+                string clientRpcPath = PathUtil.Combine(root, config.ClientRpcOutputPath);
 
                 ProtocolDef protocol = ProtocolParser.Parse(protocolPath, Types);
                 ProtocolValidator.Validate(protocol);
 
-                WriteFile(Path.Combine(serverRpcPath, "RPCCommon.h"), CppGenerator.GenerateCommon(protocol));
-                WriteFile(Path.Combine(serverRpcPath, "C2S_Stub.h"), CppGenerator.GenerateC2SStub(protocol));
-                WriteFile(Path.Combine(serverRpcPath, "S2C_Proxy.h"), CppGenerator.GenerateS2CProxy(protocol));
+                WriteFile(Path.Combine(serverRpcPath, "RPCCommon.h"), CppGenerator.GenerateCommon(protocol, config));
+                WriteFile(Path.Combine(serverRpcPath, "C2S_Stub.h"), CppGenerator.GenerateC2SStub(protocol, config));
+                WriteFile(Path.Combine(serverRpcPath, "S2C_Proxy.h"), CppGenerator.GenerateS2CProxy(protocol, config));
 
-                WriteFile(Path.Combine(clientRpcPath, "RPCCommon.cs"), CSharpGenerator.GenerateCommon(protocol));
-                WriteFile(Path.Combine(clientRpcPath, "C2S_Proxy.cs"), CSharpGenerator.GenerateC2SProxy(protocol));
-                WriteFile(Path.Combine(clientRpcPath, "S2C_Stub.cs"), CSharpGenerator.GenerateS2CStub(protocol));
+                WriteFile(Path.Combine(clientRpcPath, "RPCCommon.cs"), CSharpGenerator.GenerateCommon(protocol, config));
+                WriteFile(Path.Combine(clientRpcPath, "C2S_Proxy.cs"), CSharpGenerator.GenerateC2SProxy(protocol, config));
+                WriteFile(Path.Combine(clientRpcPath, "S2C_Stub.cs"), CSharpGenerator.GenerateS2CStub(protocol, config));
 
                 Console.WriteLine("RPC PacketGenerator completed.");
+                Console.WriteLine("Config     : " + configPath);
                 Console.WriteLine("Protocol   : " + protocolPath);
                 Console.WriteLine("Server RPC : " + serverRpcPath);
                 Console.WriteLine("Client RPC : " + clientRpcPath);
@@ -169,6 +206,131 @@ namespace PacketGenerator
             map.Add("float", new TypeInfo("float", "float", "float", "WriteFloat", "ReadFloat", 4, long.MaxValue));
             map.Add("double", new TypeInfo("double", "double", "double", "WriteDouble", "ReadDouble", 8, long.MaxValue));
             return map;
+        }
+    }
+
+
+    internal static class GeneratorConfigParser
+    {
+        public static GeneratorConfig Parse(string path)
+        {
+            if (!File.Exists(path))
+                throw new FileNotFoundException("PacketGenerator config file not found.", path);
+
+            GeneratorConfig config = new GeneratorConfig();
+            string section = string.Empty;
+            string[] lines = File.ReadAllLines(path);
+
+            for (int i = 0; i < lines.Length; ++i)
+            {
+                string line = TextUtil.StripComment(lines[i]).Trim();
+                if (line.Length == 0)
+                    continue;
+
+                if (line.StartsWith("[", StringComparison.Ordinal) && line.EndsWith("]", StringComparison.Ordinal))
+                {
+                    section = line.Substring(1, line.Length - 2).Trim().ToLowerInvariant();
+                    continue;
+                }
+
+                int equal = line.IndexOf('=');
+                if (equal <= 0)
+                    throw new Exception("Config line " + (i + 1).ToString(CultureInfo.InvariantCulture) + ": expected key=value.");
+
+                string key = line.Substring(0, equal).Trim().ToLowerInvariant();
+                string value = line.Substring(equal + 1).Trim();
+
+                if (value.EndsWith(";", StringComparison.Ordinal))
+                    value = value.Substring(0, value.Length - 1).Trim();
+
+                Apply(config, section, key, value, i + 1);
+            }
+
+            return config;
+        }
+
+        private static void Apply(GeneratorConfig config, string section, string key, string value, int lineNumber)
+        {
+            if (section == "path")
+            {
+                if (key == "protocol")
+                    config.ProtocolPath = NormalizeRelativePath(value);
+                else if (key == "serverrpcoutput")
+                    config.ServerRpcOutputPath = NormalizeRelativePath(value);
+                else if (key == "clientrpcoutput")
+                    config.ClientRpcOutputPath = NormalizeRelativePath(value);
+                else
+                    throw UnknownKey(section, key, lineNumber);
+            }
+            else if (section == "cppcommon" || section == "cppstub" || section == "cppproxy")
+            {
+                List<string> includes = GetIncludeList(config, section);
+
+                if (key == "includes")
+                {
+                    includes.Clear();
+                    AddIncludeList(includes, value);
+                }
+                else if (key == "include")
+                {
+                    includes.Add(NormalizeIncludePath(value));
+                }
+                else
+                {
+                    throw UnknownKey(section, key, lineNumber);
+                }
+            }
+            else if (section == "cpp")
+            {
+                throw new Exception("Config line " + lineNumber.ToString(CultureInfo.InvariantCulture) + ": [Cpp] RuntimeIncludes is deprecated. Use [CppCommon], [CppStub], and [CppProxy] with repeated Include= lines.");
+            }
+            else if (section == "csharp" || section == "cs")
+            {
+                if (key == "namespace")
+                    config.CsNamespace = value;
+                else
+                    throw UnknownKey(section, key, lineNumber);
+            }
+            else
+            {
+                throw new Exception("Config line " + lineNumber.ToString(CultureInfo.InvariantCulture) + ": unknown section: [" + section + "]");
+            }
+        }
+
+        private static List<string> GetIncludeList(GeneratorConfig config, string section)
+        {
+            if (section == "cppcommon")
+                return config.CppCommonIncludes;
+            if (section == "cppstub")
+                return config.CppStubIncludes;
+            if (section == "cppproxy")
+                return config.CppProxyIncludes;
+            throw new ArgumentException("Unknown include section: " + section);
+        }
+
+        private static void AddIncludeList(List<string> output, string value)
+        {
+            string[] items = value.Split(new char[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < items.Length; ++i)
+                output.Add(NormalizeIncludePath(items[i].Trim()));
+        }
+
+        private static string NormalizeRelativePath(string value)
+        {
+            return value.Replace('\\', '/').Trim();
+        }
+
+        private static string NormalizeIncludePath(string value)
+        {
+            string include = value.Replace('\\', '/').Trim();
+            if (include.StartsWith("\"", StringComparison.Ordinal) && include.EndsWith("\"", StringComparison.Ordinal) && include.Length >= 2)
+                include = include.Substring(1, include.Length - 2);
+            return include;
+        }
+
+        private static Exception UnknownKey(string section, string key, int lineNumber)
+        {
+            return new Exception("Config line " + lineNumber.ToString(CultureInfo.InvariantCulture) + ": unknown key [" + section + "] " + key);
         }
     }
 
@@ -439,12 +601,12 @@ namespace PacketGenerator
 
     internal static class CppGenerator
     {
-        public static string GenerateCommon(ProtocolDef protocol)
+        public static string GenerateCommon(ProtocolDef protocol, GeneratorConfig config)
         {
             CodeWriter w = new CodeWriter();
             w.Line("#pragma once");
             w.Line();
-            w.Line("#include <cstdint>");
+            AppendCppIncludes(w, config.CppCommonIncludes);
             w.Line();
             w.Line("constexpr std::uint8_t dfPACKET_CODE = static_cast<std::uint8_t>(" + protocol.Settings.PacketCodeHex + ");");
             w.Line("constexpr int dfPACKET_HEADER_SIZE = " + protocol.Settings.HeaderSize.ToString(CultureInfo.InvariantCulture) + ";");
@@ -461,15 +623,13 @@ namespace PacketGenerator
             return w.ToString();
         }
 
-        public static string GenerateC2SStub(ProtocolDef protocol)
+        public static string GenerateC2SStub(ProtocolDef protocol, GeneratorConfig config)
         {
             List<PacketDef> packets = protocol.GetPackets("c2s");
             CodeWriter w = new CodeWriter();
             w.Line("#pragma once");
             w.Line();
-            w.Line("#include \"RPCCommon.h\"");
-            w.Line("#include \"../../Core/SerializationBuffer.h\"");
-            w.Line("#include \"../../Core/Session.h\"");
+            AppendCppIncludes(w, config.CppStubIncludes);
             w.Line();
             w.Line("class IC2S_Handler");
             w.BeginBlock();
@@ -503,15 +663,13 @@ namespace PacketGenerator
             return w.ToString();
         }
 
-        public static string GenerateS2CProxy(ProtocolDef protocol)
+        public static string GenerateS2CProxy(ProtocolDef protocol, GeneratorConfig config)
         {
             List<PacketDef> packets = protocol.GetPackets("s2c");
             CodeWriter w = new CodeWriter();
             w.Line("#pragma once");
             w.Line();
-            w.Line("#include \"RPCCommon.h\"");
-            w.Line("#include \"../../Core/SerializationBuffer.h\"");
-            w.Line("#include \"../../Core/Session.h\"");
+            AppendCppIncludes(w, config.CppProxyIncludes);
             w.Line();
             w.Line("class IS2C_Sender");
             w.BeginBlock();
@@ -541,6 +699,19 @@ namespace PacketGenerator
             w.Unindent();
             w.EndBlock(";");
             return w.ToString();
+        }
+
+
+        private static void AppendCppIncludes(CodeWriter w, List<string> includes)
+        {
+            for (int i = 0; i < includes.Count; ++i)
+            {
+                string include = includes[i];
+                if (include.StartsWith("<", StringComparison.Ordinal) && include.EndsWith(">", StringComparison.Ordinal))
+                    w.Line("#include " + include);
+                else
+                    w.Line("#include \"" + include + "\"");
+            }
         }
 
         private static void AppendConstants(CodeWriter w, ProtocolDef protocol)
@@ -638,12 +809,12 @@ namespace PacketGenerator
 
     internal static class CSharpGenerator
     {
-        public static string GenerateCommon(ProtocolDef protocol)
+        public static string GenerateCommon(ProtocolDef protocol, GeneratorConfig config)
         {
             CodeWriter w = new CodeWriter("    ");
             w.Line("using System;");
             w.Line();
-            w.Line("namespace Generated.RPC");
+            w.Line("namespace " + config.CsNamespace);
             w.BeginBlock();
             w.Line("public static class RPCCommon");
             w.BeginBlock();
@@ -667,11 +838,11 @@ namespace PacketGenerator
             return w.ToString();
         }
 
-        public static string GenerateC2SProxy(ProtocolDef protocol)
+        public static string GenerateC2SProxy(ProtocolDef protocol, GeneratorConfig config)
         {
             List<PacketDef> packets = protocol.GetPackets("c2s");
             CodeWriter w = new CodeWriter("    ");
-            w.Line("namespace Generated.RPC");
+            w.Line("namespace " + config.CsNamespace);
             w.BeginBlock();
             w.Line("public interface IC2S_Sender");
             w.BeginBlock();
@@ -697,11 +868,11 @@ namespace PacketGenerator
             return w.ToString();
         }
 
-        public static string GenerateS2CStub(ProtocolDef protocol)
+        public static string GenerateS2CStub(ProtocolDef protocol, GeneratorConfig config)
         {
             List<PacketDef> packets = protocol.GetPackets("s2c");
             CodeWriter w = new CodeWriter("    ");
-            w.Line("namespace Generated.RPC");
+            w.Line("namespace " + config.CsNamespace);
             w.BeginBlock();
             w.Line("public abstract class S2C_Stub");
             w.BeginBlock();

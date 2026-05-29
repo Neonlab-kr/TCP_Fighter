@@ -1,8 +1,8 @@
 #pragma once
 
 #include "RPCCommon.h"
-#include "../../Core/SerializationBuffer.h"
-#include "../../Core/Session.h"
+#include "../Core/SerializationBuffer.h"
+#include "../Core/Session.h"
 
 class IC2S_Handler
 {
